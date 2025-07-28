@@ -8,15 +8,7 @@ import MotivationalQuoteCard from "@/components/dashboard/motivational-quote-car
 import StatCard from "@/components/dashboard/stat-card";
 import { useAuth } from "@/context/auth-context";
 import { Flame, Target, Zap } from "lucide-react";
-
-function formatDuration(seconds: number) {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  if (hours > 0) {
-    return `${hours}h ${minutes}m`;
-  }
-  return `${minutes}m`;
-}
+import { formatDuration } from "@/lib/time-formatters";
 
 export default function DashboardPage() {
   const { profile, codingTimeToday, currentStreak } = useAuth();

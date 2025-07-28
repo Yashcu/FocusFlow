@@ -43,6 +43,7 @@ interface AuthContextType {
   longestStreak: number;
   setProfile: React.Dispatch<React.SetStateAction<UserProfile | null>>;
   fetchCodingTimeToday: () => void;
+  calculateStreaks: (uid: string) => Promise<void>; // <--- ADD THIS LINE BACK
   login: (email: string, pass: string) => Promise<any>;
   loginWithGoogle: () => Promise<any>;
   signup: (email: string, pass: string, name: string) => Promise<any>;
@@ -54,15 +55,7 @@ interface AuthContextType {
   addTask: (text: string) => Promise<void>;
   toggleTask: (id: string, completed: boolean) => Promise<void>;
   deleteTask: (id: string) => Promise<void>;
-
-  // Global Timer State
-  isTimerActive: boolean;
-  timerElapsedTime: number;
-  activeTask: Task | null;
-  isTimerSaving: boolean;
-  startGlobalTimer: (task: Task) => void;
-  stopGlobalTimer: () => Promise<void>;
-  resetGlobalTimer: () => void;
+  setTasks: React.Dispatch<React.SetStateAction<Task[]>>; // <--- ADD THIS LINE BACK
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -82,12 +75,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   // --- Task State ---
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loadingTasks, setLoadingTasks] = useState(true);
-
-  // --- Global Timer State ---
-  const [isTimerActive, setIsTimerActive] = useState(false);
-  const [timerElapsedTime, setTimerElapsedTime] = useState(0); // in milliseconds
-  const [activeTask, setActiveTask] = useState<Task | null>(null);
-  const [isTimerSaving, setIsTimerSaving] = useState(false);
 
   const fetchCodingTimeToday = useCallback(async () => {
     if (!auth.currentUser) return;
@@ -176,20 +163,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
     setCurrentStreak(cStreak);
   }, []);
-
-  // Timer logic moved to context provider
-  useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
-    if (isTimerActive) {
-      const startTime = Date.now() - timerElapsedTime;
-      interval = setInterval(() => {
-        setTimerElapsedTime(Date.now() - startTime);
-      }, 10);
-    }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [isTimerActive, timerElapsedTime]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -299,93 +272,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     await deleteTaskFS(user.uid, id);
   };
 
-  // --- Global Timer Controls ---
-  const startGlobalTimer = (task: Task) => {
-    setActiveTask(task);
-    setIsTimerActive(true);
-  };
-
-  const stopGlobalTimer = async () => {
-    if (!user || !activeTask) return;
-
-    setIsTimerActive(false);
-    setIsTimerSaving(true);
-
-    const durationInSeconds = Math.floor(timerElapsedTime / 1000);
-
-    try {
-      if (durationInSeconds > 10) {
-        // Optimistic UI Update for task completion
-        setTasks((prevTasks) =>
-          prevTasks.map((task) =>
-            task.id === activeTask.id ? { ...task, completed: true } : task
-          )
-        );
-
-        // Save activity and mark task as complete in Firestore
-        await addActivity(
-          user.uid,
-          durationInSeconds,
-          activeTask.id,
-          activeTask.text
-        );
-        await toggleTaskFS(user.uid, activeTask.id, true);
-
-        // Refresh today's coding time and streak
-        await fetchCodingTimeToday();
-        await calculateStreaks(user.uid);
-
-        toast({
-          title: "Session Saved!",
-          description: `You've logged ${formatDuration(
-            durationInSeconds
-          )} for "${activeTask.text}". Task marked as complete.`,
-        });
-      } else {
-        toast({
-          title: "Session Too Short",
-          description: "Focus sessions under 10 seconds are not saved.",
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Could not save your focus session.",
-        variant: "destructive",
-      });
-      console.error("Error saving focus session: ", error);
-      // Revert optimistic update if firestore fails
-      setTasks((prevTasks) =>
-        prevTasks.map((task) =>
-          task.id === activeTask.id ? { ...task, completed: false } : task
-        )
-      );
-    } finally {
-      setTimerElapsedTime(0);
-      setActiveTask(null);
-      setIsTimerSaving(false);
-    }
-  };
-
-  const formatDuration = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    const hours = Math.floor(minutes / 60);
-    if (hours > 0) return `${hours}h ${minutes % 60}m`;
-    return `${minutes}m`;
-  };
-
-  const resetGlobalTimer = () => {
-    if (isTimerActive) {
-      toast({
-        title: "Timer Reset",
-        description: "The session was not saved.",
-      });
-    }
-    setIsTimerActive(false);
-    setTimerElapsedTime(0);
-    setActiveTask(null);
-  };
-
   const value = {
     user,
     profile,
@@ -395,6 +281,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     longestStreak,
     setProfile,
     fetchCodingTimeToday,
+    calculateStreaks,
     login,
     loginWithGoogle,
     signup,
@@ -406,15 +293,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     addTask,
     toggleTask,
     deleteTask,
-
-    // Global Timer
-    isTimerActive,
-    timerElapsedTime,
-    activeTask,
-    isTimerSaving,
-    startGlobalTimer,
-    stopGlobalTimer,
-    resetGlobalTimer,
+    setTasks,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

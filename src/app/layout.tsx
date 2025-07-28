@@ -1,9 +1,9 @@
 import "./globals.css";
-import { Toaster } from "@/components/ui/toaster";
 import { cn } from "@/lib/utils";
 import { Inter, Space_Grotesk } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/context/auth-context";
+import { Toaster } from "@/components/ui/toaster";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -18,9 +18,6 @@ const spaceGrotesk = Space_Grotesk({
 export const metadata = {
   title: "FocusFlow",
   description: "Your productivity companion",
-  icons: {
-    icon: "/favicon.ico",
-  },
 };
 
 export default function RootLayout({

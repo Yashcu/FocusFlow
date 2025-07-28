@@ -1,8 +1,7 @@
 
 
-import { db, storage } from "./config";
+import { db } from "./config";
 import { doc, setDoc, getDoc, collection, addDoc, getDocs, updateDoc, deleteDoc, serverTimestamp, Timestamp, where, query, orderBy, limit } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 // Types
 export interface UserProfile {
@@ -10,7 +9,8 @@ export interface UserProfile {
     email: string;
     name: string;
     photoURL: string | null;
-    dailyGoal: number; // in hours
+    dailyGoal: number;
+    timezone: string;
 }
 
 export interface Task {
@@ -40,7 +40,8 @@ export const createUserProfile = async (uid: string, email: string, name: string
             email,
             name,
             photoURL,
-            dailyGoal: 5, // Default daily goal of 5 hours
+            dailyGoal: 5,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         });
     }
 };
@@ -60,15 +61,6 @@ export const getUserProfile = async (uid: string): Promise<UserProfile | null> =
 export const updateUserProfile = async (uid: string, data: Partial<UserProfile>): Promise<void> => {
     const userRef = doc(db, "users", uid);
     await updateDoc(userRef, data);
-};
-
-export const uploadAvatar = async (uid: string, file: File): Promise<string> => {
-    const filePath = `avatars/${uid}/${file.name}`;
-    const storageRef = ref(storage, filePath);
-    await uploadBytes(storageRef, file);
-    const photoURL = await getDownloadURL(storageRef);
-    await updateUserProfile(uid, { photoURL });
-    return photoURL;
 };
 
 export const getAllUsers = async (): Promise<UserProfile[]> => {

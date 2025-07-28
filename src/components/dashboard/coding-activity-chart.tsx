@@ -20,19 +20,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/auth-context";
 import { getActivity } from "@/lib/firebase/firestore";
 import { startOfWeek, startOfDay, format, subDays, getWeek } from "date-fns";
-
-function formatDuration(seconds: number) {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-
-  if (hours > 0) {
-    return `${hours}h ${minutes}m`;
-  }
-  if (minutes > 0) {
-    return `${minutes}m`;
-  }
-  return `0m`;
-}
+import { formatDuration } from "@/lib/time-formatters";
 
 function differenceInDays(dateLeft: Date, dateRight: Date): number {
   const diff = dateLeft.getTime() - dateRight.getTime();

@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Play, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/auth-context";
+import { useTimer } from "@/context/timer-context";
 import { useToast } from "@/hooks/use-toast";
 import {
   Select,
@@ -26,14 +27,11 @@ interface FocusModeProps {
 }
 
 export default function FocusMode({ className }: FocusModeProps) {
-  const {
-    user,
-    tasks,
-    isTimerActive,
-    isTimerSaving,
-    startGlobalTimer,
-    activeTask,
-  } = useAuth();
+  const { user, tasks } = useAuth();
+
+  const { isTimerActive, activeTask, isTimerSaving, startGlobalTimer } =
+    useTimer();
+
   const { toast } = useToast();
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 

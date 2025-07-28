@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import NextTopLoader from "nextjs-toploader";
 import {
   Sheet,
   SheetContent,
@@ -11,7 +12,6 @@ import {
 } from "@/components/ui/sheet";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Bell,
   Home,
   LineChart,
   Orbit,
@@ -28,16 +28,8 @@ import UserNav from "@/components/layout/user-nav";
 import NavLink from "@/components/layout/nav-link";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { useAuth } from "@/context/auth-context";
-
-const formatTime = (timeInMs: number) => {
-  const totalSeconds = Math.floor(timeInMs / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  const milliseconds = Math.floor((timeInMs % 1000) / 10);
-  return `${minutes.toString().padStart(2, "0")}:${seconds
-    .toString()
-    .padStart(2, "0")}:${milliseconds.toString().padStart(2, "0")}`;
-};
+import { TimerProvider, useTimer } from "@/context/timer-context";
+import ErrorBoundary from "@/components/error-boundary";
 
 function GlobalTimer() {
   const {
@@ -47,7 +39,17 @@ function GlobalTimer() {
     stopGlobalTimer,
     resetGlobalTimer,
     isTimerSaving,
-  } = useAuth();
+  } = useTimer();
+
+  const formatTime = (timeInMs: number) => {
+    const totalSeconds = Math.floor(timeInMs / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    const milliseconds = Math.floor((timeInMs % 1000) / 10);
+    return `${minutes.toString().padStart(2, "0")}:${seconds
+      .toString()
+      .padStart(2, "0")}:${milliseconds.toString().padStart(2, "0")}`;
+  };
 
   if (!isTimerActive || !activeTask) {
     return (
@@ -94,7 +96,7 @@ function GlobalTimer() {
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, profile, loading, isTimerActive } = useAuth();
+  const { user, profile, loading } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -116,13 +118,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     return pathname.startsWith(href);
   };
 
-  const handleNotificationsClick = () => {
-    toast({
-      title: "No new notifications",
-      description: "You're all caught up!",
-    });
-  };
-
   if (loading || !profile) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -135,65 +130,19 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="grid min-h-screen w-full lg:grid-cols-[280px_1fr]">
-      <div className="hidden border-r bg-muted/40 lg:block">
-        <div className="flex h-full max-h-screen flex-col gap-2">
-          <div className="flex h-[60px] items-center border-b px-6">
-            <Link href="/" className="flex items-center gap-2 font-semibold">
-              <Orbit className="h-6 w-6 text-primary" />
-              <span className="font-headline">FocusFlow</span>
-            </Link>
-            <Button
-              variant="outline"
-              size="icon"
-              className="ml-auto h-8 w-8"
-              onClick={handleNotificationsClick}
-            >
-              <Bell className="h-4 w-4" />
-              <span className="sr-only">Toggle notifications</span>
-            </Button>
-          </div>
-          <div className="flex-1 overflow-auto py-2">
-            <nav className="grid items-start px-4 text-sm font-medium">
-              {navLinks.map((link) => (
-                <NavLink
-                  href={link.href}
-                  icon={link.icon}
-                  key={link.href}
-                  isActive={isLinkActive(link.href)}
-                >
-                  {link.label}
-                </NavLink>
-              ))}
-            </nav>
-          </div>
-        </div>
-      </div>
-      <div className="flex flex-col">
-        <header className="flex h-14 lg:h-[60px] items-center gap-4 border-b bg-muted/40 px-6">
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="outline" size="icon" className="lg:hidden">
-                <PanelLeft className="h-5 w-5" />
-                <span className="sr-only">Toggle navigation menu</span>
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="flex flex-col">
-              <SheetHeader>
-                <SheetTitle>
-                  <Link
-                    href="#"
-                    className="flex items-center gap-2 text-lg font-semibold"
-                  >
-                    <Orbit className="h-6 w-6 text-primary" />
-                    <span className="">FocusFlow</span>
-                  </Link>
-                </SheetTitle>
-                <SheetDescription>
-                  Navigate through the app sections.
-                </SheetDescription>
-              </SheetHeader>
-              <nav className="grid gap-2 text-lg font-medium mt-4">
+    <TimerProvider>
+      <NextTopLoader color="#yourPrimaryColor" showSpinner={false} />
+      <div className="grid min-h-screen w-full lg:grid-cols-[280px_1fr]">
+        <div className="hidden border-r bg-muted/40 lg:block">
+          <div className="flex h-full max-h-screen flex-col gap-2">
+            <div className="flex h-[60px] items-center border-b px-6">
+              <Link href="/" className="flex items-center gap-2 font-semibold">
+                <Orbit className="h-6 w-6 text-primary" />
+                <span className="font-headline">FocusFlow</span>
+              </Link>
+            </div>
+            <div className="flex-1 overflow-auto py-2">
+              <nav className="grid items-start px-4 text-sm font-medium">
                 {navLinks.map((link) => (
                   <NavLink
                     href={link.href}
@@ -205,18 +154,60 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   </NavLink>
                 ))}
               </nav>
-            </SheetContent>
-          </Sheet>
+            </div>
+          </div>
+        </div>
+        <ErrorBoundary>
+          <div className="flex flex-col">
+            <header className="flex h-14 lg:h-[60px] items-center gap-4 border-b bg-muted/40 px-6">
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="icon" className="lg:hidden">
+                    <PanelLeft className="h-5 w-5" />
+                    <span className="sr-only">Toggle navigation menu</span>
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="flex flex-col">
+                  <SheetHeader>
+                    <SheetTitle>
+                      <Link
+                        href="#"
+                        className="flex items-center gap-2 text-lg font-semibold"
+                      >
+                        <Orbit className="h-6 w-6 text-primary" />
+                        <span className="">FocusFlow</span>
+                      </Link>
+                    </SheetTitle>
+                    <SheetDescription>
+                      Navigate through the app sections.
+                    </SheetDescription>
+                  </SheetHeader>
+                  <nav className="grid gap-2 text-lg font-medium mt-4">
+                    {navLinks.map((link) => (
+                      <NavLink
+                        href={link.href}
+                        icon={link.icon}
+                        key={link.href}
+                        isActive={isLinkActive(link.href)}
+                      >
+                        {link.label}
+                      </NavLink>
+                    ))}
+                  </nav>
+                </SheetContent>
+              </Sheet>
 
-          <GlobalTimer />
+              <GlobalTimer />
 
-          <ThemeToggle />
-          <UserNav />
-        </header>
-        <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
-          {children}
-        </main>
+              <ThemeToggle />
+              <UserNav />
+            </header>
+            <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
+              {children}
+            </main>
+          </div>
+        </ErrorBoundary>
       </div>
-    </div>
+    </TimerProvider>
   );
 }

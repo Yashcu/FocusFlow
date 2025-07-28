@@ -17,6 +17,30 @@ import { Loader2, Orbit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import React, { useState } from "react";
 import { useAuth } from "@/context/auth-context";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
+import { auth } from "@/lib/firebase/config";
+import { sendPasswordResetEmail } from "firebase/auth";
+import { z } from "zod";
+
+const loginSchema = z.object({
+  email: z.string().email("Please enter a valid email address."),
+  password: z.string().min(1, "Password cannot be empty."),
+});
+
+const forgotPasswordSchema = z.object({
+  email: z.string().email("Please enter a valid email address."),
+});
 
 export default function LoginPage() {
   const router = useRouter();
@@ -26,20 +50,37 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [showForgotPasswordDialog, setShowForgotPasswordDialog] =
+    useState(false);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      await login(email, password);
+      const validatedData = loginSchema.parse({
+        email,
+        password,
+      });
+
+      await login(validatedData.email, validatedData.password);
       router.push("/dashboard");
     } catch (error: any) {
-      toast({
-        title: "Login Failed",
-        description:
-          error.message || "Please check your credentials and try again.",
-        variant: "destructive",
-      });
+      if (error instanceof z.ZodError) {
+        toast({
+          title: "Input Error",
+          description: error.errors[0].message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Login Failed",
+          description:
+            error.message || "Please check your credentials and try again.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -63,11 +104,41 @@ export default function LoginPage() {
     }
   };
 
-  const handleFeatureNotImplemented = (feature: string) => {
-    toast({
-      title: "Feature Not Implemented",
-      description: `The "${feature}" feature is not yet available.`,
-    });
+  const handleForgotPassword = async () => {
+    try {
+      const validatedData = forgotPasswordSchema.parse({
+        email: forgotPasswordEmail,
+      });
+
+      setIsResettingPassword(true);
+      await sendPasswordResetEmail(auth, validatedData.email); // 'auth' comes from "@/lib/firebase/config"
+      toast({
+        title: "Password Reset Email Sent",
+        description:
+          "Please check your inbox (and spam folder) for instructions.",
+      });
+      setShowForgotPasswordDialog(false);
+      setForgotPasswordEmail("");
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        // Zod validation error
+        toast({
+          title: "Input Error",
+          description: error.errors[0].message,
+          variant: "destructive",
+        });
+      } else {
+        console.error("Forgot password error:", error);
+        toast({
+          title: "Error Sending Reset Email",
+          description:
+            error.message || "Could not send reset email. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } finally {
+      setIsResettingPassword(false);
+    }
   };
 
   return (
@@ -113,7 +184,7 @@ export default function LoginPage() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="m@example.com"
+                  placeholder="your-email@example.com"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -122,20 +193,67 @@ export default function LoginPage() {
               <div className="grid gap-2">
                 <div className="flex items-center">
                   <Label htmlFor="password">Password</Label>
-                  <Link
-                    href="#"
-                    className="ml-auto inline-block text-sm underline"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleFeatureNotImplemented("Forgot Password");
-                    }}
+                  <AlertDialog
+                    open={showForgotPasswordDialog}
+                    onOpenChange={setShowForgotPasswordDialog}
                   >
-                    Forgot your password?
-                  </Link>
+                    <AlertDialogTrigger asChild>
+                      <Link
+                        href="#"
+                        className="ml-auto inline-block text-sm underline"
+                        onClick={(e) => {
+                          e.preventDefault(); // Prevent default link behavior
+                          setShowForgotPasswordDialog(true); // Open the dialog
+                          setForgotPasswordEmail(email); // Pre-fill with login email if available
+                        }}
+                      >
+                        Forgot your password?
+                      </Link>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Reset Password</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Enter the email address associated with your account,
+                          and we'll send you a link to reset your password.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <div className="grid gap-2 py-4">
+                        <Label htmlFor="reset-email">Email</Label>
+                        <Input
+                          id="reset-email"
+                          type="email"
+                          placeholder="your-email@example.com"
+                          value={forgotPasswordEmail}
+                          onChange={(e) =>
+                            setForgotPasswordEmail(e.target.value)
+                          }
+                          disabled={isResettingPassword}
+                        />
+                      </div>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel disabled={isResettingPassword}>
+                          Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={handleForgotPassword}
+                          disabled={isResettingPassword}
+                        >
+                          {isResettingPassword ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          ) : null}
+                          {isResettingPassword
+                            ? "Sending..."
+                            : "Send Reset Email"}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
                 <Input
                   id="password"
                   type="password"
+                  placeholder="••••••••"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}

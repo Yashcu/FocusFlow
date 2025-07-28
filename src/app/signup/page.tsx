@@ -16,6 +16,13 @@ import { Loader2, Orbit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import React, { useState } from "react";
 import { useAuth } from "@/context/auth-context";
+import { z } from "zod";
+
+const signUpSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters."),
+  email: z.string().email("Please enter a valid email address."),
+  password: z.string().min(6, "Password must be at least 6 characters long."),
+});
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -28,26 +35,35 @@ export default function SignUpPage() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password.length < 6) {
-      toast({
-        title: "Password Too Short",
-        description: "Your password must be at least 6 characters long.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsLoading(true);
+
     try {
-      await signup(email, password, name);
+      const validatedData = signUpSchema.parse({
+        name,
+        email,
+        password,
+      });
+      await signup(
+        validatedData.email,
+        validatedData.password,
+        validatedData.name
+      );
       router.push("/dashboard");
     } catch (error: any) {
-      toast({
-        title: "Sign Up Failed",
-        description:
-          error.message || "Could not create your account. Please try again.",
-        variant: "destructive",
-      });
+      if (error instanceof z.ZodError) {
+        toast({
+          title: "Input Error",
+          description: error.errors[0].message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Sign Up Failed",
+          description:
+            error.message || "Could not create your account. Please try again.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsLoading(false);
     }

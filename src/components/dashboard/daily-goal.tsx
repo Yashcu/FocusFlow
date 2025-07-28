@@ -16,15 +16,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/auth-context";
 import { Skeleton } from "../ui/skeleton";
 import { useRouter } from "next/navigation";
-
-function formatDuration(seconds: number) {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  if (hours > 0) {
-    return `${hours}h ${minutes}m`;
-  }
-  return `${minutes}m`;
-}
+import { formatDuration } from "@/lib/time-formatters";
 
 export default function DailyGoal({ className }: { className?: string }) {
   const { toast } = useToast();
