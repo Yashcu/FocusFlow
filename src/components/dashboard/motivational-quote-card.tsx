@@ -34,8 +34,8 @@ export default function MotivationalQuoteCard({
         } else if (result.data) {
           setData(result.data);
         }
-      } catch (error) {
-        console.error(error);
+      } catch (err) {
+        console.error('Could not load motivation for today.', err);
       } finally {
         setLoading(false);
       }

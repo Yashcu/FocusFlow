@@ -30,13 +30,11 @@ export default function DailyCodingTasks({ className }: DailyCodingTasksProps) {
   const handleAddTask = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (newTask.trim() === '' || !user) return;
-
     try {
       await addTask(newTask);
       setNewTask('');
-    } catch (error) {
-      console.error('Error adding task:', error);
-      // Optionally, show a toast notification on error
+    } catch (err) {
+      console.error('Error adding task:', err);
     }
   };
 
@@ -44,29 +42,27 @@ export default function DailyCodingTasks({ className }: DailyCodingTasksProps) {
     if (!user) return;
     try {
       await toggleTask(id, completed);
-    } catch (error) {
-      console.error('Error toggling task:', error);
+    } catch (err) {
+      console.error('Error toggling task:', err);
     }
   };
 
-  // --- REFACTORED: Wrapped in useCallback for performance ---
-  // This prevents the function from being recreated on every render unless its dependencies change.
   const handleDeleteTask = useCallback(
     async (id: string) => {
       if (!user) return;
       try {
         await deleteTask(id);
-      } catch (error) {
-        console.error('Error deleting task:', error);
+      } catch (err) {
+        console.error('Error deleting task:', err);
       }
     },
-    [deleteTask, user] // Dependency array ensures the function is stable
+    [deleteTask, user]
   );
 
   return (
     <Card className={cn('h-full flex flex-col', className)}>
       <CardHeader>
-        <CardTitle>Today's Coding Tasks</CardTitle>
+        <CardTitle>Today&apos;s Coding Tasks</CardTitle>
         <CardDescription>
           Add and track your coding questions for today.
         </CardDescription>

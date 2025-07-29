@@ -139,7 +139,6 @@ export default function LoginPage() {
           variant: 'destructive',
         });
       } else {
-        console.error('Forgot password error:', error);
         toast({
           title: 'Error Sending Reset Email',
           description: isErrorWithMessage(error)

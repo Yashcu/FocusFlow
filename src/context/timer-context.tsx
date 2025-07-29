@@ -22,9 +22,9 @@ const TIMER_INTERVAL_MS = 50;
 interface TimerContextType {
   isTimerActive: boolean;
   timerElapsedTime: number;
-  activeTask: Task | null;
+  activeTask: Partial<Task> | null;
   isTimerSaving: boolean;
-  startGlobalTimer: (task: Task) => void;
+  startGlobalTimer: (task?: Partial<Task>) => void;
   stopGlobalTimer: () => Promise<void>;
   resetGlobalTimer: () => void;
 }
@@ -39,10 +39,9 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const [isTimerActive, setIsTimerActive] = useState(false);
   const [timerElapsedTime, setTimerElapsedTime] = useState(0);
-  const [activeTask, setActiveTask] = useState<Task | null>(null);
+  const [activeTask, setActiveTask] = useState<Partial<Task> | null>(null);
   const [isTimerSaving, setIsTimerSaving] = useState(false);
 
-  // Timer logic
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
     if (isTimerActive) {
@@ -54,10 +53,15 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({
     return () => {
       if (interval) clearInterval(interval);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isTimerActive]);
 
-  const startGlobalTimer = useCallback((task: Task) => {
-    setActiveTask(task);
+  const startGlobalTimer = useCallback((task?: Partial<Task>) => {
+    if (task) {
+      setActiveTask(task);
+    } else {
+      setActiveTask({ id: 'general_focus', text: 'General Focus' });
+    }
     setIsTimerActive(true);
   }, []);
 
@@ -68,23 +72,26 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({
     setIsTimerSaving(true);
 
     const durationInSeconds = Math.floor(timerElapsedTime / 1000);
+    const isGeneralFocus = activeTask.id === 'general_focus';
 
     try {
       if (durationInSeconds > MIN_SESSION_DURATION_SECONDS) {
-        setTasks((prevTasks: Task[]) =>
-          prevTasks.map((task) =>
-            task.id === activeTask.id ? { ...task, completed: true } : task
-          )
-        );
+        if (!isGeneralFocus && activeTask.id) {
+          setTasks((prevTasks: Task[]) =>
+            prevTasks.map((task) =>
+              task.id === activeTask.id ? { ...task, completed: true } : task
+            )
+          );
+          await toggleTaskFS(user.uid, activeTask.id, true);
+        }
 
         await addActivity(
           user.uid,
           durationInSeconds,
-          activeTask.id,
+          isGeneralFocus ? undefined : activeTask.id,
           activeTask.text
         );
 
-        await toggleTaskFS(user.uid, activeTask.id, true);
         await fetchCodingTimeToday();
         await calculateStreaks(user.uid);
 
@@ -93,7 +100,7 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({
           description: `You've logged ${formatDuration(
             durationInSeconds,
             'long'
-          )} for "${activeTask.text}". Task marked as complete.`,
+          )} for "${activeTask.text}".`,
         });
       } else {
         toast({
@@ -101,18 +108,16 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({
           description: `Focus sessions under ${MIN_SESSION_DURATION_SECONDS} seconds are not saved.`,
         });
       }
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Could not save your focus session.',
-        variant: 'destructive',
-      });
-      console.error('Error saving focus session: ', error);
-      setTasks((prevTasks: Task[]) =>
-        prevTasks.map((task) =>
-          task.id === activeTask.id ? { ...task, completed: false } : task
-        )
-      );
+    } catch (err) {
+      console.error('Error saving session:', err);
+
+      if (!isGeneralFocus && activeTask.id) {
+        setTasks((prevTasks: Task[]) =>
+          prevTasks.map((task) =>
+            task.id === activeTask.id ? { ...task, completed: false } : task
+          )
+        );
+      }
     } finally {
       setTimerElapsedTime(0);
       setActiveTask(null);

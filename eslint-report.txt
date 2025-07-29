@@ -1,0 +1,31 @@
+
+E:\New Project\focusflow\src\app\(app)\analytics\page.tsx
+  460:14  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\New Project\focusflow\src\components\dashboard\daily-coding-tasks.tsx
+  38:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+  51:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+  67:16  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+E:\New Project\focusflow\src\components\dashboard\focus-mode.tsx
+  12:16  warning  'Loader2' is defined but never used  @typescript-eslint/no-unused-vars
+
+E:\New Project\focusflow\src\components\dashboard\motivational-quote-card.tsx
+  38:16  warning  'err' is defined but never used  @typescript-eslint/no-unused-vars
+
+E:\New Project\focusflow\src\context\auth-context.tsx
+  101:14  warning  'err' is defined but never used  @typescript-eslint/no-unused-vars
+  187:18  warning  'err' is defined but never used  @typescript-eslint/no-unused-vars
+  223:18  warning  'err' is defined but never used  @typescript-eslint/no-unused-vars
+
+E:\New Project\focusflow\src\context\timer-context.tsx
+  111:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+E:\New Project\focusflow\src\server\actions\actions.ts
+  27:12  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+E:\New Project\focusflow\tailwind.config.ts
+  77:13  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+✖ 12 problems (2 errors, 10 warnings)
+

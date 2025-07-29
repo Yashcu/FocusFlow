@@ -97,8 +97,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       const userTasks = await getTasks(uid);
       setTasks(userTasks);
-    } catch (error) {
-      console.error('Failed to load tasks from Firestore', error);
+    } catch (err) {
+      console.error('Could not fetch tasks. Please try again.', err);
     } finally {
       setLoadingTasks(false);
     }
@@ -179,8 +179,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             fetchTasks(currentUser.uid),
             calculateStreaks(currentUser.uid),
           ]);
-        } catch (error) {
-          console.error('Failed to fetch user profile:', error);
+        } catch (err) {
+          console.error('Could not load user', err);
           setProfile(null);
         }
       } else {
@@ -211,8 +211,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             setCurrentStreak(0);
             setLongestStreak(0);
           }
-        } catch (error) {
-          console.error('Social sign-in redirect error:', error);
+        } catch (err) {
+          console.error('Could not get redirect result', err);
           setUser(null);
           setProfile(null);
           setCurrentStreak(0);

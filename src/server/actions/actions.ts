@@ -23,8 +23,8 @@ export async function fetchProductivityTip(): Promise<{
   try {
     const result = await getProductivityTip();
     return { data: result, error: null };
-  } catch (error) {
-    console.error('Error fetching productivity tip:', error);
+  } catch (err) {
+    console.error('Error fetching productivity tip:', err);
     return {
       data: null,
       error: 'Failed to generate a tip. Please try again later.',
@@ -46,7 +46,6 @@ export async function uploadImageToCloudinary(formData: FormData): Promise<{
   const UPLOAD_PRESET = process.env.CLOUDINARY_UPLOAD_PRESET;
 
   if (!CLOUD_NAME || !UPLOAD_PRESET) {
-    console.error('Cloudinary environment variables are not set.');
     return {
       url: null,
       error: 'Server configuration error: Cloudinary not set up.',
@@ -70,7 +69,6 @@ export async function uploadImageToCloudinary(formData: FormData): Promise<{
 
     if (!response.ok) {
       const errorData = await response.json();
-      console.error('Cloudinary upload failed:', errorData);
       return {
         url: null,
         error: errorData.error?.message || 'Cloudinary upload failed.',
@@ -80,8 +78,6 @@ export async function uploadImageToCloudinary(formData: FormData): Promise<{
     const data = await response.json();
     return { url: data.secure_url, error: null }; // Return the secure URL
   } catch (error: unknown) {
-    console.error('Error uploading to Cloudinary:', error);
-
     let message = 'An unexpected error occurred during upload.';
     if (error instanceof Error) {
       message = error.message;

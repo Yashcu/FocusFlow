@@ -1,4 +1,4 @@
-import { db } from './config';
+import { db } from "./config";
 import {
   doc,
   setDoc,
@@ -13,7 +13,7 @@ import {
   where,
   query,
   orderBy,
-} from 'firebase/firestore';
+} from "firebase/firestore";
 
 // Types
 export interface UserProfile {
@@ -48,8 +48,7 @@ export const createUserProfile = async (
   name: string,
   photoURL: string | null = null
 ): Promise<void> => {
-  const userDocRef = doc(db, 'users', uid);
-  // Check if profile exists
+  const userDocRef = doc(db, "users", uid);
   const docSnap = await getDoc(userDocRef);
   if (!docSnap.exists()) {
     await setDoc(userDocRef, {
@@ -66,7 +65,7 @@ export const createUserProfile = async (
 export const getUserProfile = async (
   uid: string
 ): Promise<UserProfile | null> => {
-  const docRef = doc(db, 'users', uid);
+  const docRef = doc(db, "users", uid);
   const docSnap = await getDoc(docRef);
 
   if (docSnap.exists()) {
@@ -80,34 +79,42 @@ export const updateUserProfile = async (
   uid: string,
   data: Partial<UserProfile>
 ): Promise<void> => {
-  const userRef = doc(db, 'users', uid);
+  const userRef = doc(db, "users", uid);
   await updateDoc(userRef, data);
 };
 
 export const getAllUsers = async (): Promise<UserProfile[]> => {
-  const usersCollection = collection(db, 'users');
+  const usersCollection = collection(db, "users");
   const usersSnapshot = await getDocs(usersCollection);
   return usersSnapshot.docs.map((doc) => doc.data() as UserProfile);
 };
 
 // --- Task Functions ---
 
+// --- REFACTORED: Switched to a more robust start-of-day/end-of-day query ---
 export const getTasks = async (uid: string): Promise<Task[]> => {
-  // Get today's date at midnight
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const startOfToday = Timestamp.fromDate(today);
+  // Get the start of the current day (midnight)
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  const startTimestamp = Timestamp.fromDate(startOfToday);
 
-  const tasksRef = collection(db, 'users', uid, 'tasks');
+  // Get the end of the current day (23:59:59.999)
+  const endOfToday = new Date();
+  endOfToday.setHours(23, 59, 59, 999);
+  const endTimestamp = Timestamp.fromDate(endOfToday);
+
+  const tasksRef = collection(db, "users", uid, "tasks");
+  // This query now reliably fetches all tasks for the current calendar day.
   const q = query(
     tasksRef,
-    where('createdAt', '>=', startOfToday),
-    orderBy('createdAt', 'asc')
+    where("createdAt", ">=", startTimestamp),
+    where("createdAt", "<=", endTimestamp),
+    orderBy("createdAt", "asc")
   );
   const querySnapshot = await getDocs(q);
 
   return querySnapshot.docs.map(
-    (doc) => ({ id: doc.id, ...doc.data() }) as Task
+    (doc) => ({ id: doc.id, ...doc.data() } as Task)
   );
 };
 
@@ -117,7 +124,7 @@ export const addTask = async (uid: string, text: string): Promise<Task> => {
     completed: false,
     createdAt: serverTimestamp(),
   };
-  const tasksRef = collection(db, 'users', uid, 'tasks');
+  const tasksRef = collection(db, "users", uid, "tasks");
   const docRef = await addDoc(tasksRef, newTask);
 
   return { id: docRef.id, text, completed: false, createdAt: Timestamp.now() };
@@ -128,7 +135,7 @@ export const toggleTask = async (
   taskId: string,
   completed: boolean
 ): Promise<void> => {
-  const taskRef = doc(db, 'users', uid, 'tasks', taskId);
+  const taskRef = doc(db, "users", uid, "tasks", taskId);
   await updateDoc(taskRef, { completed });
 };
 
@@ -136,7 +143,7 @@ export const deleteTask = async (
   uid: string,
   taskId: string
 ): Promise<void> => {
-  const taskRef = doc(db, 'users', uid, 'tasks', taskId);
+  const taskRef = doc(db, "users", uid, "tasks", taskId);
   await deleteDoc(taskRef);
 };
 
@@ -149,7 +156,7 @@ export const addActivity = async (
   taskText?: string
 ): Promise<void> => {
   const today = new Date();
-  const activityRef = collection(db, 'users', uid, 'activity');
+  const activityRef = collection(db, "users", uid, "activity");
 
   const activityData: {
     date: Timestamp;
@@ -158,7 +165,7 @@ export const addActivity = async (
     taskText?: string;
   } = {
     date: Timestamp.fromDate(today),
-    duration, // duration in seconds
+    duration,
   };
 
   if (taskId && taskText) {
@@ -170,20 +177,20 @@ export const addActivity = async (
 };
 
 export const getActivity = async (
-  uid: string,
+  uid:string,
   days = 365
 ): Promise<Activity[]> => {
-  const activityRef = collection(db, 'users', uid, 'activity');
+  const activityRef = collection(db, "users", uid, "activity");
   const startDate = new Date();
   startDate.setDate(startDate.getDate() - days);
 
   const q = query(
     activityRef,
-    where('date', '>=', startDate),
-    orderBy('date', 'desc')
+    where("date", ">=", startDate),
+    orderBy("date", "desc")
   );
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map(
-    (doc) => ({ id: doc.id, ...doc.data() }) as Activity
+    (doc) => ({ id: doc.id, ...doc.data() } as Activity)
   );
 };

@@ -31,7 +31,6 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   // This method is called after an error has been thrown.
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     // You can also log the error to an error reporting service here
-    console.error('Uncaught error:', error, errorInfo);
     this.setState({ errorInfo: errorInfo }); // Store errorInfo for display/logging
   }
 
