@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { Button } from "@/components/ui/button";
-import NextTopLoader from "nextjs-toploader";
+import { Button } from '@/components/ui/button';
+import NextTopLoader from 'nextjs-toploader';
 import {
   Sheet,
   SheetContent,
@@ -9,8 +9,7 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from "@/components/ui/sheet";
-import { useToast } from "@/hooks/use-toast";
+} from '@/components/ui/sheet';
 import {
   Home,
   LineChart,
@@ -20,16 +19,16 @@ import {
   Square,
   RotateCcw,
   Loader2,
-} from "lucide-react";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import React, { useEffect } from "react";
-import UserNav from "@/components/layout/user-nav";
-import NavLink from "@/components/layout/nav-link";
-import { ThemeToggle } from "@/components/layout/theme-toggle";
-import { useAuth } from "@/context/auth-context";
-import { TimerProvider, useTimer } from "@/context/timer-context";
-import ErrorBoundary from "@/components/error-boundary";
+} from 'lucide-react';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import React, { useEffect } from 'react';
+import UserNav from '@/components/layout/user-nav';
+import NavLink from '@/components/layout/nav-link';
+import { ThemeToggle } from '@/components/layout/theme-toggle';
+import { useAuth } from '@/context/auth-context';
+import { TimerProvider, useTimer } from '@/context/timer-context';
+import ErrorBoundary from '@/components/error-boundary';
 
 function GlobalTimer() {
   const {
@@ -46,9 +45,9 @@ function GlobalTimer() {
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
     const milliseconds = Math.floor((timeInMs % 1000) / 10);
-    return `${minutes.toString().padStart(2, "0")}:${seconds
+    return `${minutes.toString().padStart(2, '0')}:${seconds
       .toString()
-      .padStart(2, "0")}:${milliseconds.toString().padStart(2, "0")}`;
+      .padStart(2, '0')}:${milliseconds.toString().padStart(2, '0')}`;
   };
 
   if (!isTimerActive || !activeTask) {
@@ -97,22 +96,21 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, profile, loading } = useAuth();
-  const { toast } = useToast();
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push("/login");
+      router.push('/login');
     }
   }, [user, loading, router]);
 
   const navLinks = [
-    { href: "/dashboard", icon: Home, label: "Dashboard" },
-    { href: "/analytics", icon: LineChart, label: "Analytics" },
-    { href: "/settings", icon: Settings, label: "Settings" },
+    { href: '/dashboard', icon: Home, label: 'Dashboard' },
+    { href: '/analytics', icon: LineChart, label: 'Analytics' },
+    { href: '/settings', icon: Settings, label: 'Settings' },
   ];
 
   const isLinkActive = (href: string) => {
-    if (href === "/dashboard") {
+    if (href === '/dashboard') {
       return pathname === href;
     }
     return pathname.startsWith(href);

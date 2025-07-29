@@ -1,26 +1,25 @@
-"use client";
+'use client';
 
-import StatCard from "@/components/dashboard/stat-card";
+import StatCard from '@/components/dashboard/stat-card';
+import { TooltipProps } from 'recharts';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from '@/components/ui/card';
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-} from "@/components/ui/chart";
-import { useAuth } from "@/context/auth-context";
-import { getActivity, Activity } from "@/lib/firebase/firestore";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
+} from '@/components/ui/chart';
+import { useAuth } from '@/context/auth-context';
+import { getActivity, Activity } from '@/lib/firebase/firestore';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import {
   Clock,
   Code,
-  TrendingUp,
-  Hash,
   CheckCircle,
   XIcon,
   Search,
@@ -31,70 +30,95 @@ import {
   CalendarDays,
   Moon,
   Sun,
-} from "lucide-react";
-import React, { useEffect, useState, useMemo } from "react";
-import {
-  format,
-  startOfDay,
-  subDays,
-  isSameDay,
-  differenceInDays,
-} from "date-fns";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Calendar } from "@/components/ui/calendar";
-import { formatDuration } from "@/lib/time-formatters";
-
-type TaskAnalyticsData = {
-  name: string;
-  displayName: string;
-  total: number;
-};
+} from 'lucide-react';
+import React, { useEffect, useState, useMemo } from 'react';
+import { format, startOfDay, subDays, isSameDay } from 'date-fns';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Calendar } from '@/components/ui/calendar';
+import { formatDuration } from '@/utils/time-formatters';
 
 const allAchievements = [
   {
-    id: "1-day",
-    title: "First Step",
-    description: "Completed your first day.",
+    id: '1-day',
+    title: 'First Step',
+    description: 'Completed your first day.',
     icon: Sun,
   },
   {
-    id: "7-day",
-    title: "Week of Fire",
-    description: "Maintained a 7-day streak.",
+    id: '7-day',
+    title: 'Week of Fire',
+    description: 'Maintained a 7-day streak.',
     icon: Flame,
   },
   {
-    id: "14-day",
-    title: "Two-Week Tenacity",
-    description: "Kept the flame alive for 14 days.",
+    id: '14-day',
+    title: 'Two-Week Tenacity',
+    description: 'Kept the flame alive for 14 days.',
     icon: Award,
   },
   {
-    id: "30-day",
-    title: "Month of Consistency",
-    description: "Completed a 30-day streak.",
+    id: '30-day',
+    title: 'Month of Consistency',
+    description: 'Completed a 30-day streak.',
     icon: CalendarDays,
   },
   {
-    id: "night-owl",
-    title: "Night Owl",
-    description: "Coded past midnight.",
+    id: 'night-owl',
+    title: 'Night Owl',
+    description: 'Coded past midnight.',
     icon: Moon,
     isLocked: true,
   },
 ];
 
+const SimpleTooltipContent = (props: TooltipProps<number, string>) => {
+  // Recharts provides the 'active' prop to determine if the tooltip should be visible
+  if (props.active && props.payload && props.payload.length) {
+    return (
+      <ChartTooltipContent
+        {...props}
+        formatter={(value) => {
+          if (typeof value === 'number') {
+            return formatDuration(value);
+          }
+          return value;
+        }}
+      />
+    );
+  }
+  return null;
+};
+
+type TaskAnalyticsDataItem = {
+  name: string;
+  displayName: string;
+  total: number;
+};
+
+type WeeklyCodingDataItem = {
+  day: string;
+  durationInSeconds: number;
+};
+
+type ChartDataItem = TaskAnalyticsDataItem | WeeklyCodingDataItem;
+
 export default function AnalyticsPage() {
   const { user, currentStreak, longestStreak } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const searchQuery = searchParams.get("q") || "";
+  const searchQuery = searchParams.get('q') || '';
 
   const [allActivities, setAllActivities] = useState<Activity[]>([]);
-  const [stats, setStats] = useState<any>({});
+  const [stats, setStats] = useState<{
+    avgDailyCoding: string;
+    totalCodingHours: string;
+  }>({
+    avgDailyCoding: '',
+    totalCodingHours: '',
+  });
   const [loading, setLoading] = useState(true);
 
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
@@ -111,9 +135,9 @@ export default function AnalyticsPage() {
   const setSearchQuery = (query: string) => {
     const params = new URLSearchParams(searchParams);
     if (query) {
-      params.set("q", query);
+      params.set('q', query);
     } else {
-      params.delete("q");
+      params.delete('q');
     }
     router.replace(`/analytics?${params.toString()}`);
   };
@@ -130,7 +154,7 @@ export default function AnalyticsPage() {
 
       const dayMap = new Map<string, number>();
       activities.forEach((act) => {
-        const dayKey = format(startOfDay(act.date.toDate()), "yyyy-MM-dd");
+        const dayKey = format(startOfDay(act.date.toDate()), 'yyyy-MM-dd');
         dayMap.set(dayKey, (dayMap.get(dayKey) || 0) + act.duration);
       });
 
@@ -194,7 +218,7 @@ export default function AnalyticsPage() {
 
     const weeklyMap = new Map<string, number>();
     last7Days.forEach((day) => {
-      weeklyMap.set(format(day, "EEE"), 0);
+      weeklyMap.set(format(day, 'EEE'), 0);
     });
 
     allActivities.forEach((act) => {
@@ -204,7 +228,7 @@ export default function AnalyticsPage() {
       );
 
       if (isWithinLast7Days) {
-        const dayKey = format(activityDay, "EEE");
+        const dayKey = format(activityDay, 'EEE');
         weeklyMap.set(dayKey, (weeklyMap.get(dayKey) || 0) + act.duration);
       }
     });
@@ -236,13 +260,13 @@ export default function AnalyticsPage() {
       if (ach.isLocked) return false;
       if (loading) return false;
       switch (ach.id) {
-        case "1-day":
+        case '1-day':
           return longestStreak >= 1;
-        case "7-day":
+        case '7-day':
           return longestStreak >= 7;
-        case "14-day":
+        case '14-day':
           return longestStreak >= 14;
-        case "30-day":
+        case '30-day':
           return longestStreak >= 30;
         default:
           return false;
@@ -282,17 +306,28 @@ export default function AnalyticsPage() {
     return formatDuration(value);
   };
 
-  const chartTooltipContent = (props: any) => {
-    const { payload, label } = props;
+  const chartTooltipContent = (props: TooltipProps<number, string>) => {
+    const { payload } = props;
     if (!payload || payload.length === 0) return null;
 
-    const data = payload[0].payload;
+    const data = payload[0]?.payload as ChartDataItem | undefined;
+
+    if (!data) return null;
+
+    const tooltipLabel =
+      (data as TaskAnalyticsDataItem).name ||
+      (data as WeeklyCodingDataItem).day;
 
     return (
       <ChartTooltipContent
-        formatter={(value) => formatDuration(value as number)}
-        label={data.name}
         {...props}
+        label={tooltipLabel}
+        formatter={(value) => {
+          if (typeof value === 'number') {
+            return formatDuration(value);
+          }
+          return value;
+        }}
       />
     );
   };
@@ -315,13 +350,13 @@ export default function AnalyticsPage() {
         />
         <StatCard
           title="Total Coding Hours"
-          value={stats.totalCodingHours || "0m"}
+          value={stats.totalCodingHours || '0m'}
           icon={Code}
           description="All time tracked"
         />
         <StatCard
           title="Avg. Daily Coding"
-          value={stats.avgDailyCoding || "0m"}
+          value={stats.avgDailyCoding || '0m'}
           icon={Clock}
           description="Avg over all time"
         />
@@ -337,9 +372,9 @@ export default function AnalyticsPage() {
                   {selectedDate
                     ? `Your coding hours for tasks on ${format(
                         selectedDate,
-                        "PPP"
+                        'PPP'
                       )}.`
-                    : "Select a day to see tasks."}
+                    : 'Select a day to see tasks.'}
                 </CardDescription>
               </div>
               <div className="relative w-full sm:w-auto">
@@ -356,7 +391,7 @@ export default function AnalyticsPage() {
                     variant="ghost"
                     size="icon"
                     className="absolute right-1 top-1 h-7 w-7"
-                    onClick={() => setSearchQuery("")}
+                    onClick={() => setSearchQuery('')}
                   >
                     <XIcon className="h-4 w-4" />
                     <span className="sr-only">Clear search</span>
@@ -387,7 +422,7 @@ export default function AnalyticsPage() {
                   />
                   <ChartTooltip
                     content={chartTooltipContent}
-                    cursor={{ fill: "hsl(var(--muted))" }}
+                    cursor={{ fill: 'hsl(var(--muted))' }}
                   />
                   <Bar
                     dataKey="total"
@@ -402,13 +437,13 @@ export default function AnalyticsPage() {
                 <CheckCircle className="w-12 h-12 text-muted-foreground mb-4" />
                 <h3 className="text-lg font-semibold">
                   {searchQuery
-                    ? "No Matching Tasks Found"
-                    : "No Task Data For This Day"}
+                    ? 'No Matching Tasks Found'
+                    : 'No Task Data For This Day'}
                 </h3>
                 <p className="text-muted-foreground">
                   {searchQuery
                     ? `Your search for "${searchQuery}" did not return any results.`
-                    : "Either no tasks were logged on this day, or you were in a general focus session."}
+                    : 'Either no tasks were logged on this day, or you were in a general focus session.'}
                 </p>
               </div>
             )}
@@ -431,9 +466,9 @@ export default function AnalyticsPage() {
                 disabled={creationDate ? { before: creationDate } : undefined}
                 modifiers={activityDayModifiers}
                 modifiersClassNames={{
-                  active: "bg-primary/20 rounded-full",
-                  selected: "bg-primary text-primary-foreground rounded-full",
-                  today: "border-2 border-primary rounded-full",
+                  active: 'bg-primary/20 rounded-full',
+                  selected: 'bg-primary text-primary-foreground rounded-full',
+                  today: 'border-2 border-primary rounded-full',
                 }}
                 className="rounded-md"
               />
@@ -448,8 +483,8 @@ export default function AnalyticsPage() {
             <CardTitle>Daily Activity Log</CardTitle>
             <CardDescription>
               {selectedDate
-                ? `Focus sessions for ${format(selectedDate, "PPP")}`
-                : "Select a day to see activity"}
+                ? `Focus sessions for ${format(selectedDate, 'PPP')}`
+                : 'Select a day to see activity'}
             </CardDescription>
           </CardHeader>
           <CardContent className="h-[300px] overflow-y-auto">
@@ -465,14 +500,14 @@ export default function AnalyticsPage() {
                         className="font-semibold text-sm truncate"
                         title={activity.taskText}
                       >
-                        {activity.taskText || "General Focus"}
+                        {activity.taskText || 'General Focus'}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {format(activity.date.toDate(), "p")}
+                        {format(activity.date.toDate(), 'p')}
                       </p>
                     </div>
                     <div className="font-semibold text-sm tabular-nums">
-                      {formatDuration(activity.duration, "long")}
+                      {formatDuration(activity.duration, 'long')}
                     </div>
                   </li>
                 ))}
@@ -481,12 +516,12 @@ export default function AnalyticsPage() {
               <div className="flex flex-col items-center justify-center h-full text-center">
                 <CalendarIcon className="w-12 h-12 text-muted-foreground mb-4" />
                 <h3 className="text-lg font-semibold">
-                  {selectedDate ? "No Activity Logged" : "Select a Day"}
+                  {selectedDate ? 'No Activity Logged' : 'Select a Day'}
                 </h3>
                 <p className="text-muted-foreground">
                   {selectedDate
                     ? `There were no focus sessions on this day.`
-                    : "Click a date on the calendar to see details."}
+                    : 'Click a date on the calendar to see details.'}
                 </p>
               </div>
             )}
@@ -514,13 +549,8 @@ export default function AnalyticsPage() {
                   allowDecimals={false}
                 />
                 <ChartTooltip
-                  content={(props) => (
-                    <ChartTooltipContent
-                      {...props}
-                      formatter={(value) => formatDuration(value as number)}
-                    />
-                  )}
-                  cursor={{ fill: "hsl(var(--muted))" }}
+                  content={<SimpleTooltipContent />}
+                  cursor={{ fill: 'hsl(var(--muted))' }}
                 />
 
                 <Bar

@@ -1,22 +1,22 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { GoogleIcon } from "@/components/icons";
-import { Loader2, Orbit } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import React, { useState } from "react";
-import { useAuth } from "@/context/auth-context";
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { GoogleIcon } from '@/components/icons';
+import { Loader2, Orbit } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import React, { useState } from 'react';
+import { useAuth } from '@/context/auth-context';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,32 +27,41 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+} from '@/components/ui/alert-dialog';
 
-import { auth } from "@/lib/firebase/config";
-import { sendPasswordResetEmail } from "firebase/auth";
-import { z } from "zod";
+import { auth } from '@/lib/firebase/config';
+import { sendPasswordResetEmail } from 'firebase/auth';
+import { z } from 'zod';
+
+function isErrorWithMessage(error: unknown): error is { message: string } {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'message' in error &&
+    typeof (error as { message: unknown }).message === 'string'
+  );
+}
 
 const loginSchema = z.object({
-  email: z.string().email("Please enter a valid email address."),
-  password: z.string().min(1, "Password cannot be empty."),
+  email: z.string().email('Please enter a valid email address.'),
+  password: z.string().min(1, 'Password cannot be empty.'),
 });
 
 const forgotPasswordSchema = z.object({
-  email: z.string().email("Please enter a valid email address."),
+  email: z.string().email('Please enter a valid email address.'),
 });
 
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const { login, loginWithGoogle } = useAuth();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [showForgotPasswordDialog, setShowForgotPasswordDialog] =
     useState(false);
-  const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
   const [isResettingPassword, setIsResettingPassword] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -65,20 +74,21 @@ export default function LoginPage() {
       });
 
       await login(validatedData.email, validatedData.password);
-      router.push("/dashboard");
-    } catch (error: any) {
+      router.push('/dashboard');
+    } catch (error: unknown) {
       if (error instanceof z.ZodError) {
         toast({
-          title: "Input Error",
+          title: 'Input Error',
           description: error.errors[0].message,
-          variant: "destructive",
+          variant: 'destructive',
         });
       } else {
         toast({
-          title: "Login Failed",
-          description:
-            error.message || "Please check your credentials and try again.",
-          variant: "destructive",
+          title: 'Login Failed',
+          description: isErrorWithMessage(error)
+            ? error.message
+            : 'Please check your credentials and try again.',
+          variant: 'destructive',
         });
       }
     } finally {
@@ -86,18 +96,19 @@ export default function LoginPage() {
     }
   };
 
-  const handleSocialLogin = async (provider: "google") => {
-    if (provider === "google") {
+  const handleSocialLogin = async (provider: 'google') => {
+    if (provider === 'google') {
       setIsGoogleLoading(true);
       try {
         await loginWithGoogle();
         // Redirect will be handled by Firebase
-      } catch (error: any) {
+      } catch (error: unknown) {
         toast({
-          title: "Google Login Failed",
-          description:
-            error.message || "Could not log in with Google. Please try again.",
-          variant: "destructive",
+          title: 'Google Login Failed',
+          description: isErrorWithMessage(error)
+            ? error.message
+            : 'Could not log in with Google. Please try again.',
+          variant: 'destructive',
         });
         setIsGoogleLoading(false);
       }
@@ -111,29 +122,30 @@ export default function LoginPage() {
       });
 
       setIsResettingPassword(true);
-      await sendPasswordResetEmail(auth, validatedData.email); // 'auth' comes from "@/lib/firebase/config"
+      await sendPasswordResetEmail(auth, validatedData.email);
       toast({
-        title: "Password Reset Email Sent",
+        title: 'Password Reset Email Sent',
         description:
-          "Please check your inbox (and spam folder) for instructions.",
+          'Please check your inbox (and spam folder) for instructions.',
       });
       setShowForgotPasswordDialog(false);
-      setForgotPasswordEmail("");
-    } catch (error: any) {
+      setForgotPasswordEmail('');
+    } catch (error: unknown) {
       if (error instanceof z.ZodError) {
         // Zod validation error
         toast({
-          title: "Input Error",
+          title: 'Input Error',
           description: error.errors[0].message,
-          variant: "destructive",
+          variant: 'destructive',
         });
       } else {
-        console.error("Forgot password error:", error);
+        console.error('Forgot password error:', error);
         toast({
-          title: "Error Sending Reset Email",
-          description:
-            error.message || "Could not send reset email. Please try again.",
-          variant: "destructive",
+          title: 'Error Sending Reset Email',
+          description: isErrorWithMessage(error)
+            ? error.message
+            : 'Could not send reset email. Please try again.',
+          variant: 'destructive',
         });
       }
     } finally {
@@ -159,7 +171,7 @@ export default function LoginPage() {
               <Button
                 variant="outline"
                 type="button"
-                onClick={() => handleSocialLogin("google")}
+                onClick={() => handleSocialLogin('google')}
                 disabled={isGoogleLoading}
               >
                 {isGoogleLoading ? (
@@ -167,7 +179,7 @@ export default function LoginPage() {
                 ) : (
                   <GoogleIcon />
                 )}
-                {isGoogleLoading ? "Signing in..." : "Sign in with Google"}
+                {isGoogleLoading ? 'Signing in...' : 'Sign in with Google'}
               </Button>
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
@@ -215,7 +227,7 @@ export default function LoginPage() {
                         <AlertDialogTitle>Reset Password</AlertDialogTitle>
                         <AlertDialogDescription>
                           Enter the email address associated with your account,
-                          and we'll send you a link to reset your password.
+                          and we&apos;ll send you a link to reset your password.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <div className="grid gap-2 py-4">
@@ -243,8 +255,8 @@ export default function LoginPage() {
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                           ) : null}
                           {isResettingPassword
-                            ? "Sending..."
-                            : "Send Reset Email"}
+                            ? 'Sending...'
+                            : 'Send Reset Email'}
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
@@ -261,12 +273,12 @@ export default function LoginPage() {
               </div>
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading && <Loader2 className="animate-spin" />}
-                {isLoading ? "Logging in..." : "Login"}
+                {isLoading ? 'Logging in...' : 'Login'}
               </Button>
             </div>
           </form>
           <div className="mt-4 text-center text-sm">
-            Don&apos;t have an account?{" "}
+            Don&apos;t have an account?{' '}
             <Link href="/signup" className="underline">
               Sign up
             </Link>

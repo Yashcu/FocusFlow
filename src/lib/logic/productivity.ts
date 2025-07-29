@@ -1,5 +1,4 @@
-
-import type { Activity } from "./firebase/firestore";
+import type { Activity } from '../firebase/firestore';
 
 // A simple function to calculate a productivity score based on today's activities.
 // This can be expanded with more complex logic later.

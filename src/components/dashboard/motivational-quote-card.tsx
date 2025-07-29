@@ -1,19 +1,19 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Separator } from "@/components/ui/separator";
-import { fetchProductivityTip } from "@/app/(app)/actions";
-import type { DailyDevotionOutput } from "@/ai/flows/productivity-tips";
-import { Lightbulb } from "lucide-react";
-import { cn } from "@/lib/utils";
+} from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Separator } from '@/components/ui/separator';
+import { fetchProductivityTip } from '@/server/actions/actions';
+import type { DailyDevotionOutput } from '@/server/ai/flows/productivity-tips';
+import { Lightbulb } from 'lucide-react';
+import { cn } from '@/utils/utils';
 
 export default function MotivationalQuoteCard({
   className,
@@ -34,8 +34,8 @@ export default function MotivationalQuoteCard({
         } else if (result.data) {
           setData(result.data);
         }
-      } catch (e) {
-        setError("An unexpected error occurred.");
+      } catch (error) {
+        console.error(error);
       } finally {
         setLoading(false);
       }
@@ -45,7 +45,7 @@ export default function MotivationalQuoteCard({
   }, []);
 
   return (
-    <Card className={cn("h-full", className)}>
+    <Card className={cn('h-full', className)}>
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>

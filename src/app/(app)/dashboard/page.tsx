@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import CodingActivityChart from "@/components/dashboard/coding-activity-chart";
-import DailyCodingTasks from "@/components/dashboard/daily-coding-tasks";
-import DailyGoal from "@/components/dashboard/daily-goal";
-import FocusMode from "@/components/dashboard/focus-mode";
-import MotivationalQuoteCard from "@/components/dashboard/motivational-quote-card";
-import StatCard from "@/components/dashboard/stat-card";
-import { useAuth } from "@/context/auth-context";
-import { Flame, Target, Zap } from "lucide-react";
-import { formatDuration } from "@/lib/time-formatters";
+import CodingActivityChart from '@/components/dashboard/coding-activity-chart';
+import DailyCodingTasks from '@/components/dashboard/daily-coding-tasks';
+import DailyGoal from '@/components/dashboard/daily-goal';
+import FocusMode from '@/components/dashboard/focus-mode';
+import MotivationalQuoteCard from '@/components/dashboard/motivational-quote-card';
+import StatCard from '@/components/dashboard/stat-card';
+import { useAuth } from '@/context/auth-context';
+import { Flame, Target, Zap } from 'lucide-react';
+import { formatDuration } from '@/utils/time-formatters';
 
 export default function DashboardPage() {
   const { profile, codingTimeToday, currentStreak } = useAuth();

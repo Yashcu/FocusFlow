@@ -1,6 +1,6 @@
-import { cn } from "@/lib/utils";
-import Link from "next/link";
-import React, { type ReactNode } from "react";
+import { cn } from '@/utils/utils';
+import Link from 'next/link';
+import React, { type ReactNode } from 'react';
 
 const NavLink = ({
   href,
@@ -16,8 +16,8 @@ const NavLink = ({
   <Link
     href={href}
     className={cn(
-      "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
-      isActive && "bg-muted text-primary"
+      'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary',
+      isActive && 'bg-muted text-primary'
     )}
   >
     <Icon className="h-4 w-4" />

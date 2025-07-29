@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React, {
   createContext,
@@ -6,15 +6,18 @@ import React, {
   useState,
   useEffect,
   useCallback,
-} from "react";
-import { useAuth } from "@/context/auth-context";
+} from 'react';
+import { useAuth } from '@/context/auth-context';
 import {
   addActivity,
   toggleTask as toggleTaskFS,
   Task,
-} from "@/lib/firebase/firestore";
-import { useToast } from "@/hooks/use-toast";
-import { formatDuration } from "@/lib/time-formatters";
+} from '@/lib/firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
+import { formatDuration } from '@/utils/time-formatters';
+
+const MIN_SESSION_DURATION_SECONDS = 10;
+const TIMER_INTERVAL_MS = 50;
 
 interface TimerContextType {
   isTimerActive: boolean;
@@ -35,7 +38,7 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({
   const { toast } = useToast();
 
   const [isTimerActive, setIsTimerActive] = useState(false);
-  const [timerElapsedTime, setTimerElapsedTime] = useState(0); // in milliseconds
+  const [timerElapsedTime, setTimerElapsedTime] = useState(0);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [isTimerSaving, setIsTimerSaving] = useState(false);
 
@@ -46,12 +49,12 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({
       const startTime = Date.now() - timerElapsedTime;
       interval = setInterval(() => {
         setTimerElapsedTime(Date.now() - startTime);
-      }, 10);
+      }, TIMER_INTERVAL_MS);
     }
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isTimerActive, timerElapsedTime]);
+  }, [isTimerActive]);
 
   const startGlobalTimer = useCallback((task: Task) => {
     setActiveTask(task);
@@ -67,48 +70,44 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({
     const durationInSeconds = Math.floor(timerElapsedTime / 1000);
 
     try {
-      if (durationInSeconds > 10) {
-        // Optimistic UI Update for task completion
+      if (durationInSeconds > MIN_SESSION_DURATION_SECONDS) {
         setTasks((prevTasks: Task[]) =>
           prevTasks.map((task) =>
             task.id === activeTask.id ? { ...task, completed: true } : task
           )
         );
 
-        // Save activity and mark task as complete in Firestore
         await addActivity(
           user.uid,
           durationInSeconds,
           activeTask.id,
           activeTask.text
         );
-        await toggleTaskFS(user.uid, activeTask.id, true);
 
-        // Refresh today's coding time and streak
+        await toggleTaskFS(user.uid, activeTask.id, true);
         await fetchCodingTimeToday();
         await calculateStreaks(user.uid);
 
         toast({
-          title: "Session Saved!",
+          title: 'Session Saved!',
           description: `You've logged ${formatDuration(
             durationInSeconds,
-            "long"
+            'long'
           )} for "${activeTask.text}". Task marked as complete.`,
         });
       } else {
         toast({
-          title: "Session Too Short",
-          description: "Focus sessions under 10 seconds are not saved.",
+          title: 'Session Too Short',
+          description: `Focus sessions under ${MIN_SESSION_DURATION_SECONDS} seconds are not saved.`,
         });
       }
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Could not save your focus session.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Could not save your focus session.',
+        variant: 'destructive',
       });
-      console.error("Error saving focus session: ", error);
-      // Revert optimistic update if firestore fails
+      console.error('Error saving focus session: ', error);
       setTasks((prevTasks: Task[]) =>
         prevTasks.map((task) =>
           task.id === activeTask.id ? { ...task, completed: false } : task
@@ -132,8 +131,8 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({
   const resetGlobalTimer = useCallback(() => {
     if (isTimerActive) {
       toast({
-        title: "Timer Reset",
-        description: "The session was not saved.",
+        title: 'Timer Reset',
+        description: 'The session was not saved.',
       });
     }
     setIsTimerActive(false);
@@ -159,7 +158,7 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({
 export const useTimer = () => {
   const context = useContext(TimerContext);
   if (context === undefined) {
-    throw new Error("useTimer must be used within a TimerProvider");
+    throw new Error('useTimer must be used within a TimerProvider');
   }
   return context;
 };

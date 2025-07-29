@@ -1,26 +1,36 @@
-"use client";
+'use client';
 
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from '@/components/ui/card';
 import {
   ChartTooltip,
   ChartTooltipContent,
   ChartContainer,
-} from "@/components/ui/chart";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import React, { useEffect, useState } from "react";
-import { Skeleton } from "../ui/skeleton";
-import { cn } from "@/lib/utils";
-import { useAuth } from "@/context/auth-context";
-import { getActivity } from "@/lib/firebase/firestore";
-import { startOfWeek, startOfDay, format, subDays, getWeek } from "date-fns";
-import { formatDuration } from "@/lib/time-formatters";
+} from '@/components/ui/chart';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import React, { useEffect, useState } from 'react';
+import { Skeleton } from '../ui/skeleton';
+import { cn } from '@/utils/utils';
+import { useAuth } from '@/context/auth-context';
+import { getActivity } from '@/lib/firebase/firestore';
+import { startOfWeek, startOfDay, format, subDays, getWeek } from 'date-fns';
+import { formatDuration } from '@/utils/time-formatters';
+
+interface DailyChartDataItem {
+  date: string;
+  total: number;
+}
+
+interface WeeklyChartDataItem {
+  date: string;
+  total: number;
+}
 
 function differenceInDays(dateLeft: Date, dateRight: Date): number {
   const diff = dateLeft.getTime() - dateRight.getTime();
@@ -33,8 +43,10 @@ export default function CodingActivityChart({
   className?: string;
 }) {
   const { user } = useAuth();
-  const [dailyData, setDailyData] = useState<any[] | null>(null);
-  const [weeklyData, setWeeklyData] = useState<any[] | null>(null);
+  const [dailyData, setDailyData] = useState<DailyChartDataItem[] | null>(null);
+  const [weeklyData, setWeeklyData] = useState<WeeklyChartDataItem[] | null>(
+    null
+  );
 
   useEffect(() => {
     const fetchChartData = async () => {
@@ -45,12 +57,12 @@ export default function CodingActivityChart({
       const dailyMap = new Map<string, number>();
       for (let i = 6; i >= 0; i--) {
         const day = startOfDay(subDays(new Date(), i));
-        dailyMap.set(format(day, "EEE"), 0);
+        dailyMap.set(format(day, 'EEE'), 0);
       }
       activities.forEach((act) => {
         const day = startOfDay(act.date.toDate());
         if (differenceInDays(new Date(), day) <= 6) {
-          const dayKey = format(day, "EEE");
+          const dayKey = format(day, 'EEE');
           dailyMap.set(dayKey, (dailyMap.get(dayKey) || 0) + act.duration);
         }
       });
@@ -93,7 +105,7 @@ export default function CodingActivityChart({
   };
 
   return (
-    <Card className={cn("h-full", className)}>
+    <Card className={cn('h-full', className)}>
       <CardHeader>
         <CardTitle>Coding Activity</CardTitle>
         <CardDescription>Your coding hours over time</CardDescription>

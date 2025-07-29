@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   Card,
@@ -7,26 +7,24 @@ import {
   CardHeader,
   CardTitle,
   CardFooter,
-} from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { Edit2 } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { useAuth } from "@/context/auth-context";
-import { Skeleton } from "../ui/skeleton";
-import { useRouter } from "next/navigation";
-import { formatDuration } from "@/lib/time-formatters";
+} from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
+import { Edit2 } from 'lucide-react';
+import { cn } from '@/utils/utils';
+import { useAuth } from '@/context/auth-context';
+import { Skeleton } from '../ui/skeleton';
+import { useRouter } from 'next/navigation';
+import { formatDuration } from '@/utils/time-formatters';
 
 export default function DailyGoal({ className }: { className?: string }) {
-  const { toast } = useToast();
   const router = useRouter();
   const { profile, codingTimeToday, loading } = useAuth();
 
   const dailyGoalInSeconds = (profile?.dailyGoal || 5) * 3600;
 
   const handleEditGoal = () => {
-    router.push("/settings");
+    router.push('/settings');
   };
 
   const progress = Math.min(
@@ -37,7 +35,7 @@ export default function DailyGoal({ className }: { className?: string }) {
   );
 
   return (
-    <Card className={cn("h-full", className)}>
+    <Card className={cn('h-full', className)}>
       <CardHeader>
         <CardTitle>Daily Coding Goal</CardTitle>
         <CardDescription>

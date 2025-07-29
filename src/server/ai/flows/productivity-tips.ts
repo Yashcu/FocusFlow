@@ -1,4 +1,3 @@
-
 'use server';
 
 /**
@@ -8,13 +7,17 @@
  * - DailyDevotionOutput - The return type for the getProductivityTip function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import { ai } from '@/server/ai/genkit';
+import { z } from 'genkit';
 
 // Schema for the general daily tip
 const DailyDevotionOutputSchema = z.object({
-  sanskritShlok: z.string().describe('A shlok from the Bhagavad Gita in Devanagari script.'),
-  transliteratedShlok: z.string().describe('The transliteration of the shlok in English characters.'),
+  sanskritShlok: z
+    .string()
+    .describe('A shlok from the Bhagavad Gita in Devanagari script.'),
+  transliteratedShlok: z
+    .string()
+    .describe('The transliteration of the shlok in English characters.'),
   meaning: z.string().describe('The meaning of the shlok.'),
   motivation: z
     .string()
@@ -30,7 +33,7 @@ export async function getProductivityTip(): Promise<DailyDevotionOutput> {
 
 const dailyPrompt = ai.definePrompt({
   name: 'dailyDeveloperMotivationPrompt',
-  output: {schema: DailyDevotionOutputSchema},
+  output: { schema: DailyDevotionOutputSchema },
   prompt: `You are a wise spiritual guide who is also a senior software developer.
 Your task is to provide a daily source of inspiration for a developer.
 Provide one shlok (verse) from the Bhagavad Gita.
@@ -47,7 +50,7 @@ const productivityTipsFlow = ai.defineFlow(
     outputSchema: DailyDevotionOutputSchema,
   },
   async () => {
-    const {output} = await dailyPrompt({});
+    const { output } = await dailyPrompt({});
     return output!;
   }
 );

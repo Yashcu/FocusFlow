@@ -1,26 +1,26 @@
-"use client";
+'use client';
 
-import { useState, useMemo } from "react";
+import { useState, useMemo } from 'react';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Play, Loader2 } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { useAuth } from "@/context/auth-context";
-import { useTimer } from "@/context/timer-context";
-import { useToast } from "@/hooks/use-toast";
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Play, Loader2 } from 'lucide-react';
+import { cn } from '@/utils/utils';
+import { useAuth } from '@/context/auth-context';
+import { useTimer } from '@/context/timer-context';
+import { useToast } from '@/hooks/use-toast';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select';
 
 interface FocusModeProps {
   className?: string;
@@ -52,9 +52,9 @@ export default function FocusMode({ className }: FocusModeProps) {
   const handleStart = () => {
     if (!selectedTask) {
       toast({
-        title: "No Task Selected",
-        description: "Please select a task to focus on.",
-        variant: "destructive",
+        title: 'No Task Selected',
+        description: 'Please select a task to focus on.',
+        variant: 'destructive',
       });
       return;
     }
@@ -62,7 +62,7 @@ export default function FocusMode({ className }: FocusModeProps) {
   };
 
   return (
-    <Card className={cn("h-full flex flex-col", className)}>
+    <Card className={cn('h-full flex flex-col', className)}>
       <CardHeader>
         <CardTitle>Focus Mode</CardTitle>
         <CardDescription>
@@ -76,7 +76,7 @@ export default function FocusMode({ className }: FocusModeProps) {
               if (!isTimerActive) setSelectedTaskId(value);
             }}
             disabled={isTimerActive || !incompleteTasks.length}
-            value={selectedTaskId || ""}
+            value={selectedTaskId || ''}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select a task to begin..." />
@@ -131,7 +131,7 @@ export default function FocusMode({ className }: FocusModeProps) {
             ) : (
               <Play className="mr-2" />
             )}
-            {isTimerActive ? "Session in Progress" : "Start Focus Session"}
+            {isTimerActive ? 'Session in Progress' : 'Start Focus Session'}
           </Button>
         </div>
       </CardContent>

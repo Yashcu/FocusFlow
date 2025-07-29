@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -9,70 +9,75 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from '@/components/ui/card';
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { useToast } from "@/hooks/use-toast";
-import { Upload, Loader2, Trash2 } from "lucide-react";
-import React, { useState, useEffect, useRef } from "react";
-import { useAuth } from "@/context/auth-context";
-import { updateUserProfile } from "@/lib/firebase/firestore";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Slider } from "@/components/ui/slider";
+} from '@/components/ui/alert-dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import { useToast } from '@/hooks/use-toast';
+import { Upload, Loader2, Trash2 } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useAuth } from '@/context/auth-context';
+import { updateUserProfile } from '@/lib/firebase/firestore';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Slider } from '@/components/ui/slider';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select';
 import {
   EmailAuthProvider,
   reauthenticateWithCredential,
   updatePassword,
-} from "firebase/auth";
-import { uploadImageToCloudinary } from "../actions";
+} from 'firebase/auth';
+import { uploadImageToCloudinary } from '../../../server/actions/actions';
+
+function isErrorWithMessage(error: unknown): error is { message: string } {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'message' in error &&
+    typeof (error as { message: unknown }).message === 'string'
+  );
+}
 
 export default function SettingsPage() {
   const { toast } = useToast();
   const { user, loading, profile, setProfile } = useAuth();
-  if (loading || !user || !profile) {
-    return <Skeleton />;
-  }
-  const [name, setName] = useState("");
+
+  const [name, setName] = useState('');
   const [dailyGoal, setDailyGoal] = useState(5);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isDeletingAvatar, setIsDeletingAvatar] = useState(false);
 
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [isPasswordChanging, setIsPasswordChanging] = useState(false);
 
   const [timezone, setTimezone] = useState(
-    profile.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone
+    Intl.DateTimeFormat().resolvedOptions().timeZone
   );
 
   const [showUploadSuccessDialog, setShowUploadSuccessDialog] = useState(false);
-  const [isDeletingAvatar, setIsDeletingAvatar] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (profile) {
-      setName(profile.name || "");
+      setName(profile.name || '');
       setDailyGoal(profile.dailyGoal || 5);
       setTimezone(
         profile.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone
@@ -80,7 +85,7 @@ export default function SettingsPage() {
     }
   }, [profile]);
 
-  if (loading || (!loading && !profile)) {
+  if (loading || !user || !profile) {
     return (
       <div className="space-y-6">
         <div className="space-y-2">
@@ -161,14 +166,17 @@ export default function SettingsPage() {
       setProfile((p) => (p ? { ...p, ...updatedProfileData } : null));
 
       toast({
-        title: "Profile Updated",
-        description: "Your changes have been successfully saved.",
+        title: 'Profile Updated',
+        description: 'Your changes have been successfully saved.',
       });
-    } catch (error) {
+    } catch (_error: unknown) {
+      console.error('Error updating profile:', _error);
       toast({
-        title: "Error",
-        description: "Failed to update profile.",
-        variant: "destructive",
+        title: 'Error',
+        description: isErrorWithMessage(_error)
+          ? _error.message
+          : 'Could not update your profile. Please try again.',
+        variant: 'destructive',
       });
     } finally {
       setIsSaving(false);
@@ -186,40 +194,36 @@ export default function SettingsPage() {
     setIsUploading(true);
 
     try {
-      // Create FormData to send the file to the server action
       const formData = new FormData();
-      formData.append("file", file); // 'file' here matches the 'file' key in the server action
+      formData.append('file', file);
 
-      // Call the server action to upload to Cloudinary
-      const result = await uploadImageToCloudinary(formData); // <--- CHANGE IS HERE
+      const result = await uploadImageToCloudinary(formData);
 
       if (result.error) {
-        throw new Error(result.error); // Propagate error from server action
+        throw new Error(result.error);
       }
 
-      const photoURL = result.url; // Get the URL from the server action's result
+      const photoURL = result.url;
 
-      // Update user profile in Firestore with the new Cloudinary URL
       if (photoURL) {
-        await updateUserProfile(user.uid, { photoURL }); //
+        await updateUserProfile(user.uid, { photoURL });
         setProfile((p) => (p ? { ...p, photoURL } : null));
         setShowUploadSuccessDialog(true);
       } else {
-        throw new Error("Cloudinary URL not received.");
+        throw new Error('Cloudinary URL not received.');
       }
-    } catch (error: any) {
-      console.error(error);
+    } catch (_error: unknown) {
+      console.error(_error);
       toast({
-        title: "Upload Failed",
-        description:
-          error.message || "Could not upload your avatar. Please try again.",
-        variant: "destructive",
+        title: 'Upload Failed',
+        description: isErrorWithMessage(_error)
+          ? _error.message
+          : 'Could not upload your avatar. Please try again.',
       });
     } finally {
       setIsUploading(false);
-      // Clear the file input so the same file can be selected again
       if (fileInputRef.current) {
-        fileInputRef.current.value = "";
+        fileInputRef.current.value = '';
       }
     }
   };
@@ -233,15 +237,17 @@ export default function SettingsPage() {
       setProfile((p) => (p ? { ...p, photoURL: null } : null));
 
       toast({
-        title: "Profile Picture Removed",
-        description: "Your profile picture has been successfully deleted.",
+        title: 'Profile Picture Removed',
+        description: 'Your profile picture has been successfully deleted.',
       });
-    } catch (error) {
-      console.error("Error deleting avatar:", error);
+    } catch (_error: unknown) {
+      console.error('Error deleting avatar:', _error);
       toast({
-        title: "Deletion Failed",
-        description: "Could not remove your profile picture. Please try again.",
-        variant: "destructive",
+        title: 'Deletion Failed',
+        description: isErrorWithMessage(_error)
+          ? _error.message
+          : 'Could not remove your profile picture. Please try again.',
+        variant: 'destructive',
       });
     } finally {
       setIsDeletingAvatar(false);
@@ -251,26 +257,26 @@ export default function SettingsPage() {
   const handleChangePassword = async () => {
     if (!user) {
       toast({
-        title: "Authentication Error",
-        description: "Please log in again.",
-        variant: "destructive",
+        title: 'Authentication Error',
+        description: 'Please log in again.',
+        variant: 'destructive',
       });
       return;
     }
 
     if (newPassword.length < 6) {
       toast({
-        title: "Password Too Short",
-        description: "Your new password must be at least 6 characters long.",
-        variant: "destructive",
+        title: 'Password Too Short',
+        description: 'Your new password must be at least 6 characters long.',
+        variant: 'destructive',
       });
       return;
     }
     if (newPassword !== confirmNewPassword) {
       toast({
-        title: "Passwords Do Not Match",
-        description: "New password and confirmation do not match.",
-        variant: "destructive",
+        title: 'Passwords Do Not Match',
+        description: 'New password and confirmation do not match.',
+        variant: 'destructive',
       });
       return;
     }
@@ -285,9 +291,9 @@ export default function SettingsPage() {
         await reauthenticateWithCredential(user, credential);
       } else {
         toast({
-          title: "Re-authentication Required",
-          description: "Please provide your current password.",
-          variant: "destructive",
+          title: 'Re-authentication Required',
+          description: 'Please provide your current password.',
+          variant: 'destructive',
         });
         setIsPasswordChanging(false);
         return;
@@ -296,28 +302,40 @@ export default function SettingsPage() {
       await updatePassword(user, newPassword);
 
       toast({
-        title: "Password Changed",
-        description: "Your password has been successfully updated.",
+        title: 'Password Changed',
+        description: 'Your password has been successfully updated.',
       });
 
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmNewPassword("");
-    } catch (error: any) {
-      console.error("Error changing password:", error);
-      let errorMessage = "Failed to change password. Please try again.";
-      if (error.code === "auth/wrong-password") {
-        errorMessage = "Your current password is incorrect.";
-      } else if (error.code === "auth/user-not-found") {
-        errorMessage = "User not found or credentials invalid.";
-      } else if (error.code === "auth/requires-recent-login") {
-        errorMessage =
-          "Please log out and log in again to change your password.";
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmNewPassword('');
+    } catch (error: unknown) {
+      console.error('Error changing password:', error);
+      let errorMessage = 'Failed to change password. Please try again.';
+      if (typeof error === 'object' && error !== null && 'code' in error) {
+        if ((error as { code: string }).code === 'auth/wrong-password') {
+          errorMessage = 'Your current password is incorrect.';
+        } else if ((error as { code: string }).code === 'auth/user-not-found') {
+          errorMessage = 'User not found or credentials invalid.';
+        } else if (
+          (error as { code: string }).code === 'auth/requires-recent-login'
+        ) {
+          errorMessage =
+            'Please log out and log in again to change your password.';
+        } else if (isErrorWithMessage(error)) {
+          // Use the type guard here
+          errorMessage = error.message; // Now safely accessible
+        }
+      } else if (isErrorWithMessage(error)) {
+        // Also check here if it's a generic Error
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
       }
       toast({
-        title: "Password Change Failed",
+        title: 'Password Change Failed',
         description: errorMessage,
-        variant: "destructive",
+        variant: 'destructive',
       });
     } finally {
       setIsPasswordChanging(false);
@@ -351,10 +369,10 @@ export default function SettingsPage() {
               <div className="flex items-center gap-4">
                 <Avatar className="h-20 w-20">
                   <AvatarImage
-                    src={profile.photoURL || "https://placehold.co/80x80.png"}
+                    src={profile.photoURL || 'https://placehold.co/80x80.png'}
                     data-ai-hint="female avatar"
                   />
-                  <AvatarFallback>{(name || "U").charAt(0)}</AvatarFallback>
+                  <AvatarFallback>{(name || 'U').charAt(0)}</AvatarFallback>
                 </Avatar>
                 <input
                   type="file"
@@ -377,7 +395,7 @@ export default function SettingsPage() {
                     ) : (
                       <Upload className="mr-2 h-4 w-4" />
                     )}
-                    {isUploading ? "Uploading..." : "Upload"}
+                    {isUploading ? 'Uploading...' : 'Upload'}
                   </Button>
                   {profile.photoURL && (
                     <Button
@@ -410,7 +428,7 @@ export default function SettingsPage() {
                 <Input
                   id="email"
                   type="email"
-                  value={user.email || ""}
+                  value={user.email || ''}
                   disabled
                 />
               </div>
@@ -449,7 +467,8 @@ export default function SettingsPage() {
             <CardHeader>
               <CardTitle>Change Password</CardTitle>
               <CardDescription>
-                Update your account password. You'll need your current password.
+                Update your account password. You&apos;ll need your current
+                password.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -497,7 +516,7 @@ export default function SettingsPage() {
                 {isPasswordChanging ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : null}
-                {isPasswordChanging ? "Changing..." : "Change Password"}
+                {isPasswordChanging ? 'Changing...' : 'Change Password'}
               </Button>
             </CardFooter>
           </Card>

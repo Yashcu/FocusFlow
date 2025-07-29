@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React, {
   createContext,
@@ -6,7 +6,7 @@ import React, {
   useEffect,
   useState,
   useCallback,
-} from "react";
+} from 'react';
 import {
   onAuthStateChanged,
   User,
@@ -16,23 +16,22 @@ import {
   GoogleAuthProvider,
   signInWithRedirect,
   getRedirectResult,
-} from "firebase/auth";
-import { auth } from "@/lib/firebase/config";
+  UserCredential,
+} from 'firebase/auth';
+import { auth } from '@/lib/firebase/config';
 import {
   createUserProfile,
   getUserProfile,
   UserProfile,
   getActivity,
-  addActivity,
   getTasks,
   addTask as addTaskFS,
   toggleTask as toggleTaskFS,
   deleteTask as deleteTaskFS,
   Task,
-} from "@/lib/firebase/firestore";
-import { useRouter } from "next/navigation";
-import { startOfDay, differenceInDays } from "date-fns";
-import { useToast } from "@/hooks/use-toast";
+} from '@/lib/firebase/firestore';
+import { useRouter } from 'next/navigation';
+import { startOfDay, differenceInDays } from 'date-fns';
 
 interface AuthContextType {
   user: User | null;
@@ -43,10 +42,14 @@ interface AuthContextType {
   longestStreak: number;
   setProfile: React.Dispatch<React.SetStateAction<UserProfile | null>>;
   fetchCodingTimeToday: () => void;
-  calculateStreaks: (uid: string) => Promise<void>; // <--- ADD THIS LINE BACK
-  login: (email: string, pass: string) => Promise<any>;
-  loginWithGoogle: () => Promise<any>;
-  signup: (email: string, pass: string, name: string) => Promise<any>;
+  calculateStreaks: (uid: string) => Promise<void>;
+  login: (email: string, pass: string) => Promise<UserCredential>;
+  loginWithGoogle: () => Promise<void>;
+  signup: (
+    email: string,
+    pass: string,
+    name: string
+  ) => Promise<UserCredential>;
   logout: () => Promise<void>;
 
   // Task Management
@@ -55,7 +58,7 @@ interface AuthContextType {
   addTask: (text: string) => Promise<void>;
   toggleTask: (id: string, completed: boolean) => Promise<void>;
   deleteTask: (id: string) => Promise<void>;
-  setTasks: React.Dispatch<React.SetStateAction<Task[]>>; // <--- ADD THIS LINE BACK
+  setTasks: React.Dispatch<React.SetStateAction<Task[]>>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -70,7 +73,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [currentStreak, setCurrentStreak] = useState(0);
   const [longestStreak, setLongestStreak] = useState(0);
   const router = useRouter();
-  const { toast } = useToast();
 
   // --- Task State ---
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -96,7 +98,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       const userTasks = await getTasks(uid);
       setTasks(userTasks);
     } catch (error) {
-      console.error("Failed to load tasks from Firestore", error);
+      console.error('Failed to load tasks from Firestore', error);
     } finally {
       setLoadingTasks(false);
     }
@@ -178,7 +180,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             calculateStreaks(currentUser.uid),
           ]);
         } catch (error) {
-          console.error("Failed to fetch user profile:", error);
+          console.error('Failed to fetch user profile:', error);
           setProfile(null);
         }
       } else {
@@ -191,9 +193,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             if (!userProfile) {
               await createUserProfile(
                 user.uid,
-                user.email || "",
-                user.displayName || "User",
-                user.photoURL || ""
+                user.email || '',
+                user.displayName || 'User',
+                user.photoURL || ''
               );
               userProfile = await getUserProfile(user.uid);
             }
@@ -210,7 +212,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             setLongestStreak(0);
           }
         } catch (error) {
-          console.error("Social sign-in redirect error:", error);
+          console.error('Social sign-in redirect error:', error);
           setUser(null);
           setProfile(null);
           setCurrentStreak(0);
@@ -241,24 +243,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     );
     const user = userCredential.user;
     await createUserProfile(user.uid, email, name, user.photoURL);
-    const userProfile = await getUserProfile(user.uid);
-    setProfile(userProfile);
+    setProfile(
+      userCredential.user
+        ? {
+            uid: user.uid,
+            email: user.email || '',
+            name: user.displayName || name,
+            photoURL: user.photoURL,
+            dailyGoal: 5,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          }
+        : null
+    );
+    return userCredential;
   };
 
   const logout = async () => {
     await signOut(auth);
-    router.push("/login");
+    router.push('/login');
   };
 
   // --- Task Controls ---
   const addTask = async (text: string) => {
-    if (!user) throw new Error("User not authenticated");
+    if (!user) throw new Error('User not authenticated');
     const newTask = await addTaskFS(user.uid, text);
     setTasks((prevTasks) => [...prevTasks, newTask]);
   };
 
   const toggleTask = async (id: string, completed: boolean) => {
-    if (!user) throw new Error("User not authenticated");
+    if (!user) throw new Error('User not authenticated');
     // Optimistic update
     setTasks((prevTasks) =>
       prevTasks.map((task) => (task.id === id ? { ...task, completed } : task))
@@ -267,7 +280,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const deleteTask = async (id: string) => {
-    if (!user) throw new Error("User not authenticated");
+    if (!user) throw new Error('User not authenticated');
     setTasks((prevTasks) => prevTasks.filter((task) => task.id !== id));
     await deleteTaskFS(user.uid, id);
   };
@@ -302,7 +315,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 };
