@@ -1,23 +1,57 @@
-export function formatDuration(
-  seconds: number,
-  style: 'short' | 'long' = 'short'
-): string {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
 
-  if (style === 'long') {
-    const result = [];
-    if (hours > 0) result.push(`${hours} hour${hours > 1 ? 's' : ''}`);
-    if (minutes > 0) result.push(`${minutes} minute${minutes > 1 ? 's' : ''}`);
-    if (result.length === 0) return '0 minutes';
-    return result.join(' ');
+/**
+ * Formats duration in seconds to human-readable string
+ */
+export const formatDuration = (seconds: number): string => {
+  if (seconds < 60) {
+    return `${Math.round(seconds)}s`;
   }
 
-  if (hours > 0) {
-    return `${hours}h ${minutes}m`;
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+
+  if (minutes < 60) {
+    return remainingSeconds > 0 ? `${minutes}m ${Math.round(remainingSeconds)}s` : `${minutes}m`;
   }
-  if (minutes > 0) {
-    return `${minutes}m`;
+
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+
+  if (hours < 24) {
+    return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
   }
-  return `0m`;
-}
+
+  const days = Math.floor(hours / 24);
+  const remainingHours = hours % 24;
+
+  return remainingHours > 0 ? `${days}d ${remainingHours}h` : `${days}d`;
+};
+
+/**
+ * Formats duration for display in charts and analytics
+ */
+export const formatDurationForChart = (seconds: number): string => {
+  if (seconds < 3600) {
+    return `${Math.round(seconds / 60)}m`;
+  }
+  return `${(seconds / 3600).toFixed(1)}h`;
+};
+
+/**
+ * Converts hours to seconds
+ */
+export const hoursToSeconds = (hours: number): number => hours * 3600;
+
+/**
+ * Converts minutes to seconds
+ */
+export const minutesToSeconds = (minutes: number): number => minutes * 60;
+
+/**
+ * Gets time remaining in a readable format
+ */
+export const getTimeRemaining = (endTime: number): string => {
+  const now = Date.now();
+  const timeLeft = Math.max(0, endTime - now);
+  return formatDuration(Math.floor(timeLeft / 1000));
+};

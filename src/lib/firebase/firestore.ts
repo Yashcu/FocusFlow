@@ -13,6 +13,7 @@ import {
   where,
   query,
   orderBy,
+  Firestore,
 } from "firebase/firestore";
 
 // Types
@@ -23,6 +24,7 @@ export interface UserProfile {
   photoURL: string | null;
   dailyGoal: number;
   timezone: string;
+  createdAt?: Timestamp;
 }
 
 export interface Task {
@@ -36,8 +38,11 @@ export interface Activity {
   id: string;
   date: Timestamp;
   duration: number; // in seconds
+  durationInSeconds: number; // alias for duration for compatibility
   taskId?: string;
   taskText?: string;
+  taskName?: string; // alias for taskText
+  createdAt: Timestamp;
 }
 
 // --- User Profile Functions ---
@@ -161,16 +166,22 @@ export const addActivity = async (
   const activityData: {
     date: Timestamp;
     duration: number;
+    durationInSeconds: number;
+    createdAt: Timestamp;
     taskId?: string;
     taskText?: string;
+    taskName?: string;
   } = {
     date: Timestamp.fromDate(today),
     duration,
+    durationInSeconds: duration,
+    createdAt: Timestamp.fromDate(today),
   };
 
   if (taskId && taskText) {
     activityData.taskId = taskId;
     activityData.taskText = taskText;
+    activityData.taskName = taskText;
   }
 
   await addDoc(activityRef, activityData);
