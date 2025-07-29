@@ -45,6 +45,14 @@ export interface Activity {
   createdAt: Timestamp;
 }
 
+export interface Project {
+  id?: string;
+  name: string;
+  description: string;
+  userId: string;
+  createdAt?: Timestamp;
+}
+
 // --- User Profile Functions ---
 
 export const createUserProfile = async (
@@ -96,20 +104,17 @@ export const getAllUsers = async (): Promise<UserProfile[]> => {
 
 // --- Task Functions ---
 
-// --- REFACTORED: Switched to a more robust start-of-day/end-of-day query ---
+
 export const getTasks = async (uid: string): Promise<Task[]> => {
-  // Get the start of the current day (midnight)
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
   const startTimestamp = Timestamp.fromDate(startOfToday);
 
-  // Get the end of the current day (23:59:59.999)
   const endOfToday = new Date();
   endOfToday.setHours(23, 59, 59, 999);
   const endTimestamp = Timestamp.fromDate(endOfToday);
 
   const tasksRef = collection(db, "users", uid, "tasks");
-  // This query now reliably fetches all tasks for the current calendar day.
   const q = query(
     tasksRef,
     where("createdAt", ">=", startTimestamp),
@@ -204,4 +209,47 @@ export const getActivity = async (
   return querySnapshot.docs.map(
     (doc) => ({ id: doc.id, ...doc.data() } as Activity)
   );
+};
+
+export const addProject = async (userId: string, name: string, description: string): Promise<Project> => {
+  const projectsRef = collection(db, 'users', userId, 'projects');
+  const docRef = await addDoc(projectsRef, {
+    name,
+    description,
+    userId,
+    createdAt: serverTimestamp(),
+  });
+
+  return {
+    id: docRef.id,
+    name,
+    description,
+    userId,
+    createdAt: Timestamp.now(),
+  };
+};
+
+export const getProjects = async (userId: string): Promise<Project[]> => {
+  const projectsRef = collection(db, 'users', userId, 'projects');
+  const q = query(projectsRef, orderBy('createdAt', 'desc'));
+  const querySnapshot = await getDocs(q);
+
+  return querySnapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...(doc.data() as Omit<Project, 'id'>),
+  }));
+};
+
+export const updateProject = async (
+  userId: string,
+  projectId: string,
+  updates: Partial<Omit<Project, 'id' | 'userId' | 'createdAt'>>
+): Promise<void> => {
+  const projectRef = doc(db, 'users', userId, 'projects', projectId);
+  await updateDoc(projectRef, updates);
+};
+
+export const deleteProject = async (userId: string, projectId: string): Promise<void> => {
+  const projectRef = doc(db, 'users', userId, 'projects', projectId);
+  await deleteDoc(projectRef);
 };

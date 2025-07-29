@@ -730,9 +730,9 @@ export default function AnalyticsPage() {
             <CustomCalendar
               selectedDate={selectedDate}
               setSelectedDate={setSelectedDate}
+              userCreationDate={profile?.createdAt?.toDate?.()}
               activityDays={analyticsData?.activityDays || []}
               activityData={activityData}
-              userCreationDate={creationDate}
               currentStreak={currentStreak}
             />
           </CardContent>

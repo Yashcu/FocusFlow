@@ -9,13 +9,14 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { startOfDay } from 'date-fns';
 
 interface CalendarCardProps {
   title?: string;
   description?: string;
   selectedDate: Date | undefined;
   setSelectedDate: (date: Date | undefined) => void;
-  creationDate?: Date;
+  userCreationDate?: Date;
   modifiers?: { active: Date[] };
   className?: string;
   disabled?: (date: Date) => boolean;
@@ -28,7 +29,7 @@ export const CalendarCard = React.memo<CalendarCardProps>(
     description = 'Select a day to see your activity.',
     selectedDate,
     setSelectedDate,
-    creationDate,
+    userCreationDate,
     modifiers,
     className,
     disabled,
@@ -36,21 +37,19 @@ export const CalendarCard = React.memo<CalendarCardProps>(
   }) => {
     const defaultDisabled = React.useMemo(() => {
       if (disabled) return disabled;
-      return creationDate ? { before: creationDate } : undefined;
-    }, [disabled, creationDate]);
+      if (!userCreationDate) return undefined;
+
+      return (date: Date) => date < startOfDay(userCreationDate);
+    }, [disabled, userCreationDate]);
 
     const modifiersClassNames = React.useMemo(
       () => ({
-        // Active days - days with coding activity
         active:
           'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 font-semibold relative after:content-[""] after:absolute after:bottom-1 after:left-1/2 after:transform after:-translate-x-1/2 after:w-1 after:h-1 after:bg-green-500 after:rounded-full',
-        // Selected day
         selected:
           'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground',
-        // Today
         today:
           'bg-blue-100 dark:bg-blue-900/30 border-2 border-blue-500 font-bold text-blue-800 dark:text-blue-200',
-        // Selected + Active (when an active day is selected)
         'selected active':
           'bg-primary text-primary-foreground relative after:content-[""] after:absolute after:bottom-1 after:left-1/2 after:transform after:-translate-x-1/2 after:w-1 after:h-1 after:bg-primary-foreground after:rounded-full',
       }),
@@ -59,12 +58,16 @@ export const CalendarCard = React.memo<CalendarCardProps>(
 
     const handleDateSelect = React.useCallback(
       (date: Date | undefined) => {
+        if (date && userCreationDate && date < startOfDay(userCreationDate)) {
+          return; // Don't allow selecting dates before registration
+        }
+
         setSelectedDate(date);
         if (onSelect) {
           onSelect(date);
         }
       },
-      [setSelectedDate, onSelect]
+      [setSelectedDate, onSelect, userCreationDate]
     );
 
     return (
@@ -87,6 +90,9 @@ export const CalendarCard = React.memo<CalendarCardProps>(
               selected={selectedDate}
               onSelect={handleDateSelect}
               disabled={defaultDisabled}
+              fromDate={
+                userCreationDate ? startOfDay(userCreationDate) : undefined
+              }
               modifiers={modifiers}
               modifiersClassNames={modifiersClassNames}
               className="rounded-md border"
