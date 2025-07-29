@@ -82,11 +82,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     if (!auth.currentUser) return;
     const activities = await getActivity(auth.currentUser.uid, 1);
     const today = startOfDay(new Date());
-    const todayActivities = activities.filter(
-      (a) => startOfDay(a.date.toDate()).getTime() === today.getTime()
-    );
+
+    const todayActivities = activities.filter((a) => {
+      // Use the same helper function to safely get dates
+      let activityDate;
+      if (a.createdAt && typeof a.createdAt.toDate === 'function') {
+        activityDate = startOfDay(a.createdAt.toDate());
+      } else if (a.date && typeof a.date.toDate === 'function') {
+        activityDate = startOfDay(a.date.toDate());
+      } else {
+        return false; // Skip activities without valid dates
+      }
+
+      return activityDate.getTime() === today.getTime();
+    });
+
     const totalSecondsToday = todayActivities.reduce(
-      (sum, a) => sum + a.duration,
+      (sum, a) => sum + (a.durationInSeconds || a.duration || 0),
       0
     );
     setCodingTimeToday(totalSecondsToday);
