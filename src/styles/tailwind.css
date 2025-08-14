@@ -1,0 +1,117 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --radius: 0.5rem;
+
+    /* Core Colors - A cleaner, brighter base */
+    --color-background: #f9fafb; /* gray-50 */
+    --color-foreground: #111827; /* gray-900 */
+    --color-border: #e5e7eb;     /* gray-200 */
+    --color-input: #ffffff;      /* white */
+    --color-ring: #2563eb;      /* blue-600 */
+
+    /* Card & Popover - Clean white surfaces */
+    --color-card: #ffffff;
+    --color-card-foreground: #111827;
+    --color-popover: #ffffff;
+    --color-popover-foreground: #111827;
+
+    /* Sidebar - A deep, cool gray for a professional feel */
+    --color-sidebar: #1f2937; /* gray-800 */
+    --color-sidebar-foreground: #d1d5db; /* gray-300 */
+
+    /* Muted Colors */
+    --color-muted: #f3f4f6;      /* gray-100 */
+    --color-muted-foreground: #6b7280; /* gray-500 */
+
+    /* --- Brand & Action Colors --- */
+
+    /* Primary (Blue) - Energetic and modern for main actions */
+    --color-primary: #2563eb;
+    --color-primary-foreground: #ffffff;
+
+    /* Secondary (Gray) - For less prominent actions */
+    --color-secondary: #4b5563; /* gray-600 */
+    --color-secondary-foreground: #ffffff;
+
+    /* --- Semantic & Data-Viz Colors --- */
+
+    /* Destructive (Red) */
+    --color-destructive: #dc2626;  /* red-600 */
+    --color-destructive-foreground: #ffffff;
+
+    /* Success (Green) */
+    --color-success: #16a34a;      /* green-600 */
+    --color-success-foreground: #ffffff;
+
+    /* Warning (Orange) */
+    --color-warning: #f97316;      /* orange-500 */
+    --color-warning-foreground: #ffffff;
+
+    /* Accent (Indigo) - For charts and highlights */
+    --color-accent: #4f46e5;      /* indigo-600 */
+    --color-accent-foreground: #ffffff;
+
+    /* Error (Same as Destructive for consistency) */
+    --color-error: #dc2626;
+    --color-error-foreground: #ffffff;
+  }
+
+  /* --- Dark Mode Theme --- */
+  .dark {
+    --color-background: #030712; /* gray-950 */
+    --color-foreground: #f9fafb; /* gray-50 */
+    --color-border: #374151;     /* gray-700 */
+    --color-input: #1f2937;      /* gray-800 */
+    --color-ring: #3b82f6;      /* blue-500 */
+
+    --color-card: #111827;       /* gray-900 */
+    --color-card-foreground: #f9fafb;
+    --color-popover: #111827;
+    --color-popover-foreground: #f9fafb;
+
+    --color-sidebar: #111827;
+    --color-sidebar-foreground: #9ca3af; /* gray-400 */
+
+    --color-muted: #1f2937;       /* gray-800 */
+    --color-muted-foreground: #9ca3af; /* gray-400 */
+
+    --color-primary: #3b82f6;
+    --color-primary-foreground: #ffffff;
+
+    --color-secondary: #4b5563;
+    --color-secondary-foreground: #ffffff;
+
+    --color-destructive: #991b1b; /* red-800 */
+    --color-destructive-foreground: #f9fafb;
+
+    --color-success: #166534; /* green-800 */
+    --color-success-foreground: #f9fafb;
+
+    --color-warning: #b45309; /* orange-700 */
+    --color-warning-foreground: #f9fafb;
+
+    --color-accent: #4338ca; /* indigo-700 */
+    --color-accent-foreground: #f9fafb;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer utilities {
+  .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+}
